@@ -1,0 +1,30 @@
+{
+  "id": "./college.html",
+  "name": "Top 25 Gameday",
+  "short_name": "College",
+  "start_url": "./college.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0B1016",
+  "theme_color": "#0B1016",
+  "icons": [
+    {
+      "src": "icons/college-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/college-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/college-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

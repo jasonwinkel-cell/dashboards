@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Dashboards</title>
+<link rel="manifest" href="index.webmanifest">
+<meta name="theme-color" content="#0B1016">
+<link rel="icon" type="image/png" href="icons/home-192.png">
+<link rel="apple-touch-icon" href="icons/home-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dashboards">
+<link rel="stylesheet" href="assets/nav.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: a date line, then four glance tiles (weather wide on top; college, NFL, river below).
+   Each tile summarizes and links to its full page. */
+:root{
+  --bg:#EEF1F4; --surface:#FFFFFF; --surface-2:#F3F5F8; --ink:#121A22; --ink-2:#465462; --ink-3:#7A8794; --line:#D8DEE5;
+  --warm:#D45A22; --cool:#2E6DB4; --live:#D24A0E; --live-bg:#FCE9DF; --win:#1F7A45; --loss:#B3261E; --warn:#C0392B; --river:#17707C;
+  --utah:#C40000; --byu:#0054A6; --den:#E2470F; --phi:#00606B; --sf:#AA0000;
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E141A; --surface:#151D25; --surface-2:#1B252F; --ink:#E5EBF0; --ink-2:#A5B1BC; --ink-3:#778490; --line:#25313C;
+    --warm:#FF8A50; --cool:#79AEEA; --live:#FF7B42; --live-bg:#3A2117; --win:#5BCB8A; --loss:#FF7D6E; --warn:#FF6B5B; --river:#4FC1CF;
+    --utah:#FF4B45; --byu:#6EA9EE; --den:#FF7A3D; --phi:#4FC1C9; --sf:#FF5A5A;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E141A; --surface:#151D25; --surface-2:#1B252F; --ink:#E5EBF0; --ink-2:#A5B1BC; --ink-3:#778490; --line:#25313C;
+  --warm:#FF8A50; --cool:#79AEEA; --live:#FF7B42; --live-bg:#3A2117; --win:#5BCB8A; --loss:#FF7D6E; --warn:#FF6B5B; --river:#4FC1CF;
+  --utah:#FF4B45; --byu:#6EA9EE; --den:#FF7A3D; --phi:#4FC1C9; --sf:#FF5A5A;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--display);font-variation-settings:"wdth" 100;-webkit-font-smoothing:antialiased;padding-bottom:env(safe-area-inset-bottom,0px)}
+[hidden]{display:none!important}
+a{color:inherit}
+.wrap{max-width:1100px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main.wrap{padding-block:18px 32px;display:flex;flex-direction:column;gap:14px}
+.dateline{display:flex;justify-content:space-between;align-items:baseline;gap:8px 16px;flex-wrap:wrap}
+.dateline h1{margin:0;font:800 clamp(28px,5vw,40px)/1 var(--display);font-variation-settings:"wdth" 118;letter-spacing:-.01em;text-transform:uppercase}
+.dateline .meta{font:500 12.5px/1.3 var(--mono);color:var(--ink-3);display:flex;gap:12px;align-items:center}
+.dateline button{font:600 13px/1 var(--display);color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:7px 12px;cursor:pointer}
+.grid{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+@media (min-width:760px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.tile.wide{grid-column:1/-1}}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0;text-decoration:none;color:inherit;position:relative}
+a.tile:hover{border-color:var(--ink-3)}
+a.tile:focus-visible{outline:2px solid var(--cool);outline-offset:2px}
+.th{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.th h2{margin:0;font:700 15px/1.2 var(--display);font-variation-settings:"wdth" 115;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2)}
+.th .go{font:600 12.5px/1 var(--display);color:var(--ink-3);white-space:nowrap}
+a.tile:hover .go{color:var(--ink)}
+.fail{color:var(--ink-3);font-size:14px}
+/* weather */
+.wx{display:flex;flex-wrap:wrap;gap:12px 26px;align-items:center}
+.wx .temp{font:200 64px/.9 var(--display);font-variation-settings:"wdth" 75;letter-spacing:-.02em}
+.wx .temp sup{font-size:.35em;vertical-align:1.1em;color:var(--ink-3);font-weight:400;margin-left:2px}
+.wx .cond{font:700 18px/1.2 var(--display)}
+.wx .sub{color:var(--ink-2);font-size:14px}
+.wx .hl{font:500 14px/1.3 var(--mono)} .wx .hl .h{color:var(--warm)} .wx .hl .l{color:var(--cool)}
+.wx .next{flex:1 1 260px;min-width:0;border-left:1px solid var(--line);padding-left:18px;color:var(--ink-2);font-size:14px}
+.wx .next b{color:var(--ink);display:block;font-size:13px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px}
+@media (max-width:560px){.wx .next{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:10px}}
+.alerts{display:flex;flex-direction:column;gap:6px}
+.alert{border-left:5px solid var(--warn);background:var(--live-bg);border-radius:6px;padding:6px 10px;font-weight:700;font-size:14px;color:var(--ink)}
+.alert span{font:500 12.5px/1.2 var(--mono);color:var(--ink-2);margin-left:6px}
+.src{font:500 11.5px/1.3 var(--mono);color:var(--ink-3)}
+/* games */
+.rows{display:flex;flex-direction:column;gap:8px}
+.row{--tc:var(--ink-3);display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;background:var(--surface-2);border-left:4px solid var(--tc)}
+.row img{width:30px;height:30px;object-fit:contain}
+.row .nm{font:700 16px/1.15 var(--display);min-width:0}
+.row .nm small{display:block;font:500 12.5px/1.3 var(--mono);color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .st{text-align:right;font:500 13px/1.25 var(--mono);color:var(--ink-2);white-space:nowrap}
+.row .st b{display:block;font:800 22px/1 var(--display);font-variation-settings:"wdth" 90;color:var(--ink);font-variant-numeric:tabular-nums}
+.row .st.w b{color:var(--win)} .row .st.l b{color:var(--loss)}
+.row .st.live{color:var(--live)}
+.row.minor .nm{font-size:14.5px} .row.minor img{width:24px;height:24px} .row.minor{grid-template-columns:24px minmax(0,1fr) auto;padding:6px 10px}
+.row.minor .st b{font-size:18px}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--live);margin-right:5px;vertical-align:1px;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.25}}
+/* river */
+.riv{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.riv .v{font:300 44px/1 var(--display);font-variation-settings:"wdth" 80;font-variant-numeric:tabular-nums}
+.riv .v small{font:500 14px/1 var(--mono);color:var(--ink-3);margin-left:4px}
+.riv .cat{font:600 13px/1 var(--mono)}
+.bar{position:relative;height:10px;border-radius:5px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--river)}
+.bar s{position:absolute;top:0;bottom:0;width:2px;background:var(--warn);text-decoration:none}
+footer.small{color:var(--ink-3);font-size:12.5px;padding-bottom:28px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<nav class="sitenav" aria-label="Dashboards"><div class="sitenav-in"><a href="./" aria-current="page"><img src="icons/home-64.png" alt="">Home</a><a href="weather.html"><img src="icons/weather-64.png" alt="">Weather</a><a href="college.html"><img src="icons/college-64.png" alt="">College</a><a href="nfl.html"><img src="icons/nfl-64.png" alt="">NFL</a></div></nav>
+
+<main class="wrap">
+  <div class="dateline">
+    <h1 id="today">At a glance</h1>
+    <div class="meta"><span id="updated">Loading…</span><button id="refresh" type="button">Refresh</button></div>
+  </div>
+
+  <div class="grid">
+    <a class="tile wide" href="weather.html" id="t-wx">
+      <div class="th"><h2>Easton weather</h2><span class="go">Full forecast →</span></div>
+      <div id="wx"><div class="fail">Loading the weather…</div></div>
+    </a>
+    <a class="tile" href="college.html" id="t-cfb">
+      <div class="th"><h2>Utah &amp; BYU</h2><span class="go">Top 25 Gameday →</span></div>
+      <div class="rows" id="cfb"><div class="fail">Loading games…</div></div>
+    </a>
+    <a class="tile" href="nfl.html" id="t-nfl">
+      <div class="th"><h2>NFL</h2><span class="go">Playoff Path →</span></div>
+      <div class="rows" id="nfl"><div class="fail">Loading games…</div></div>
+    </a>
+    <a class="tile wide" href="weather.html#riv-h" id="t-riv">
+      <div class="th"><h2>Delaware River at Easton</h2><span class="go">River details →</span></div>
+      <div id="riv"><div class="fail">Loading the gauge…</div></div>
+    </a>
+  </div>
+</main>
+<footer class="wrap small">Weather from the National Weather Service and Open-Meteo; scores from ESPN; river level from the NWS gauge at Easton–Phillipsburg. Refreshes every minute during games and every 5 minutes otherwise.</footer>
+
+<script>
+(() => {
+  "use strict";
+  const LAT = 40.6910, LON = -75.2100, TZ = "America/New_York";
+  const ESPN = "https://site.api.espn.com/apis/site/v2/sports/football";
+  // ESPN team ids: Utah 254, BYU 252 (Big 12); Broncos 7, Eagles 21, 49ers 25.
+  const CFB = [{ id: "254", name: "Utah", c: "--utah" }, { id: "252", name: "BYU", c: "--byu" }];
+  const NFL = [{ id: "7", name: "Broncos", c: "--den", main: true }, { id: "21", name: "Eagles", c: "--phi" }, { id: "25", name: "49ers", c: "--sf" }];
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const fmt = o => new Intl.DateTimeFormat("en-US", Object.assign({ timeZone: TZ }, o));
+  const fDay = fmt({ weekday: "long", month: "long", day: "numeric" }), fTime = fmt({ hour: "numeric", minute: "2-digit" }),
+        fKick = fmt({ weekday: "short", hour: "numeric", minute: "2-digit" }), fShort = fmt({ weekday: "short", month: "short", day: "numeric" });
+  let anyLive = false, timer = null;
+
+  async function getJSON(url, ms = 15000) {
+    const c = new AbortController(); const t = setTimeout(() => c.abort(), ms);
+    try { const r = await fetch(url, { signal: c.signal, headers: url.includes("weather.gov") ? { Accept: "application/geo+json" } : {} }); if (!r.ok) throw new Error("HTTP " + r.status); return await r.json(); }
+    finally { clearTimeout(t); }
+  }
+  const WMO = c => c == null ? "" : c === 0 ? "Clear" : c <= 2 ? "Partly cloudy" : c === 3 ? "Cloudy" : c <= 48 ? "Fog"
+    : c <= 57 ? "Drizzle" : c <= 67 ? "Rain" : c <= 77 ? "Snow" : c <= 82 ? "Rain showers" : c <= 86 ? "Snow showers" : "Thunderstorms";
+
+  /* ---------- weather ---------- */
+  let pointsP = null;
+  async function loadWx() {
+    const [om, fc, al] = await Promise.allSettled([
+      getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,apparent_temperature,weather_code&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=${encodeURIComponent(TZ)}&forecast_days=1`),
+      (pointsP = pointsP || getJSON(`https://api.weather.gov/points/${LAT},${LON}`)).then(p => getJSON(p.properties.forecast)),
+      getJSON(`https://api.weather.gov/alerts/active?point=${LAT},${LON}`)
+    ]);
+    if (fc.status === "rejected") pointsP = null;
+    const cur = om.status === "fulfilled" ? om.value.current : null;
+    const daily = om.status === "fulfilled" ? om.value.daily : null;
+    const periods = fc.status === "fulfilled" ? fc.value.properties.periods || [] : [];
+    const alerts = al.status === "fulfilled" ? (al.value.features || []).map(f => f.properties) : [];
+    if (!cur && !periods.length) { $("wx").innerHTML = `<div class="fail">The weather didn't load. Trying again shortly.</div>`; return; }
+    const p0 = periods[0], p1 = periods[1];
+    const hi = p0?.isDaytime ? p0.temperature : daily ? Math.round(daily.temperature_2m_max[0]) : null;
+    const lo = p0 && !p0.isDaytime ? p0.temperature : p1 && !p1.isDaytime ? p1.temperature : daily ? Math.round(daily.temperature_2m_min[0]) : null;
+    const feels = cur && Math.abs(cur.apparent_temperature - cur.temperature_2m) >= 2 ? `Feels like ${Math.round(cur.apparent_temperature)}°` : "";
+    $("wx").innerHTML = `
+      ${alerts.length ? `<div class="alerts">${alerts.slice(0, 3).map(a => `<div class="alert">${esc(a.event)}${a.ends || a.expires ? `<span>until ${esc(fShort.format(new Date(a.ends || a.expires)))} ${esc(fTime.format(new Date(a.ends || a.expires)))}</span>` : ""}</div>`).join("")}</div>` : ""}
+      <div class="wx">
+        ${cur ? `<div class="temp">${Math.round(cur.temperature_2m)}<sup>°F</sup></div>
+        <div><div class="cond">${esc(WMO(cur.weather_code))}</div><div class="sub">${esc(feels)}</div>
+          <div class="hl">${hi != null ? `<span class="h">H ${hi}°</span>` : ""}${hi != null && lo != null ? " · " : ""}${lo != null ? `<span class="l">L ${lo}°</span>` : ""}</div></div>` : ""}
+        ${p0 ? `<div class="next"><b>${esc(p0.name)}</b>${esc(p0.detailedForecast)}</div>` : ""}
+      </div>
+      ${cur ? `<div class="src">Current conditions: Open-Meteo model estimate for Easton. Forecast and alerts: National Weather Service.</div>` : ""}`;
+  }
+
+  /* ---------- games ---------- */
+  function norm(ev) {
+    const c = ev.competitions?.[0] || {}; const ty = (c.status || ev.status || {}).type || {};
+    const cs = (c.competitors || []).map(x => ({
+      id: String(x.team?.id ?? x.id), abbr: x.team?.abbreviation || "", name: x.team?.shortDisplayName || x.team?.location || "", logo: x.team?.logo || x.team?.logos?.[0]?.href || "",
+      score: x.score == null ? null : typeof x.score === "object" ? (x.score.displayValue ?? x.score.value) : x.score, ha: x.homeAway, winner: x.winner === true,
+      rank: x.curatedRank?.current && x.curatedRank.current <= 25 ? x.curatedRank.current : null,
+      rec: (x.records || []).find(r => r.type === "total")?.summary || x.records?.[0]?.summary || ""
+    }));
+    return { id: ev.id, date: new Date(ev.date), state: ty.state || "pre", detail: ty.shortDetail || "", cs, neutral: !!c.neutralSite, tv: c.broadcasts?.[0]?.names?.[0] || "" };
+  }
+  function row(team, events, minor) {
+    const g = events.find(e => e.cs.some(x => x.id === team.id));
+    if (!g) return `<div class="row${minor ? " minor" : ""}" style="--tc:var(${team.c})"><span></span><span class="nm">${esc(team.name)}<small>No game this week</small></span><span class="st">Bye</span></div>`;
+    const me = g.cs.find(x => x.id === team.id), op = g.cs.find(x => x.id !== team.id) || {};
+    const vs = me.ha === "home" || g.neutral ? "vs" : "at";
+    const opTxt = `${vs} ${op.rank ? "#" + op.rank + " " : ""}${op.name || op.abbr}`;
+    let st;
+    if (g.state === "in") { anyLive = true; st = `<span class="st live"><b>${esc(me.score)}–${esc(op.score)}</b><span class="dot"></span>${esc(g.detail)}</span>`; }
+    else if (g.state === "post") { const w = me.winner, l = op.winner; st = `<span class="st ${w ? "w" : l ? "l" : ""}"><b>${w ? "W" : l ? "L" : "T"} ${esc(me.score)}–${esc(op.score)}</b>${esc(g.detail || "Final")}</span>`; }
+    else st = `<span class="st"><b style="font-size:16px">${esc(fKick.format(g.date))}</b>${esc(g.tv)}</span>`;
+    return `<div class="row${minor ? " minor" : ""}" style="--tc:var(${team.c})">${me.logo ? `<img src="${esc(me.logo)}" alt="" loading="lazy">` : "<span></span>"}
+      <span class="nm">${me.rank ? `<span style="color:var(--ink-3);font-size:.8em">#${me.rank}</span> ` : ""}${esc(team.name)}<small>${esc(me.rec)} · ${esc(opTxt)}</small></span>${st}</div>`;
+  }
+  async function loadGames() {
+    const [cf, nf] = await Promise.allSettled([
+      getJSON(`${ESPN}/college-football/scoreboard?groups=4`),   // Big 12 games this week (small; covers Utah and BYU)
+      getJSON(`${ESPN}/nfl/scoreboard`)
+    ]);
+    if (cf.status === "fulfilled") { const evs = (cf.value.events || []).map(norm); $("cfb").innerHTML = CFB.map(t => row(t, evs)).join(""); }
+    else $("cfb").innerHTML = `<div class="fail">Scores didn't load. Trying again shortly.</div>`;
+    if (nf.status === "fulfilled") { const evs = (nf.value.events || []).map(norm); $("nfl").innerHTML = NFL.map(t => row(t, evs, !t.main)).join(""); }
+    else $("nfl").innerHTML = `<div class="fail">Scores didn't load. Trying again shortly.</div>`;
+  }
+
+  /* ---------- river ---------- */
+  async function loadRiver() {
+    try {
+      const g = await getJSON("https://api.water.noaa.gov/nwps/v1/gauges/ESTN4");
+      const o = g.status?.observed, f = g.status?.forecast, cats = g.flood?.categories || {};
+      if (o?.primary == null || o.primary < -900) throw new Error("no reading");
+      const minor = cats.minor?.stage ?? 22, major = cats.major?.stage ?? 30, max = Math.max(major + 2, o.primary + 1);
+      const catTxt = { no_flooding: "Normal", action: "Near flood stage", minor: "Minor flooding", moderate: "Moderate flooding", major: "Major flooding" }[o.floodCategory] || "Normal";
+      $("riv").innerHTML = `<div class="riv"><span class="v">${o.primary.toFixed(2)}<small>ft</small></span><span class="cat" style="color:${o.floodCategory && o.floodCategory !== "no_flooding" ? "var(--warn)" : "var(--win)"}">${catTxt}</span>
+          <span class="src">Reading at ${esc(fTime.format(new Date(o.validTime)))}${f?.primary != null && f.primary > -900 ? ` · forecast ${f.primary.toFixed(1)} ft by ${esc(fShort.format(new Date(f.validTime)))}` : ""} · flood stage ${minor} ft</span></div>
+        <div class="bar" aria-hidden="true"><i style="width:${Math.min(100, o.primary / max * 100).toFixed(1)}%"></i><s style="left:${(minor / max * 100).toFixed(1)}%"></s></div>`;
+    } catch (e) { $("riv").innerHTML = `<div class="fail">The river gauge didn't respond. Trying again shortly.</div>`; }
+  }
+
+  async function loadAll() {
+    anyLive = false;
+    $("refresh").textContent = "Refreshing…";
+    $("today").textContent = fDay.format(new Date());
+    await Promise.allSettled([loadWx(), loadGames(), loadRiver()]);
+    $("refresh").textContent = "Refresh";
+    $("updated").textContent = "Updated " + fTime.format(new Date());
+    clearTimeout(timer);
+    timer = setTimeout(() => { if (!document.hidden) loadAll(); }, anyLive ? 60e3 : 5 * 60e3);
+  }
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) loadAll(); });
+  $("refresh").addEventListener("click", e => { e.preventDefault(); loadAll(); });
+  loadAll();
+})();
+</script>
+</body>
+</html>

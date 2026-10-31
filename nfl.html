@@ -1,0 +1,775 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>NFL Playoff Path</title>
+<link rel="manifest" href="nfl.webmanifest">
+<meta name="theme-color" content="#0B1016">
+<link rel="icon" type="image/png" href="icons/nfl-192.png">
+<link rel="apple-touch-icon" href="icons/nfl-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NFL">
+<link rel="stylesheet" href="assets/nav.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Extra+Condensed:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: navy header with team picker; "my team" path card; AFC | NFC playoff picture
+   (seeds 1–7, the bubble, wild-card matchups); this week's games; division tables. */
+:root{
+  --bg:#F1F3F7; --surface:#FFFFFF; --surface-2:#F5F7FA; --ink:#0F1A2B; --ink-2:#435066; --ink-3:#7A8599; --line:#D9DEE7;
+  --head:#0B1F3F; --head-ink:#EEF2F8;
+  --afc:#C8102E; --afc-soft:#FBE6E9; --nfc:#0B4FA0; --nfc-soft:#E3ECF8;
+  --in:#1F7A45; --in-soft:#E2F2E8; --bubble:#B26A00; --bubble-soft:#FBEFD9; --out:#8A93A3;
+  --live:#D24A0E; --live-bg:#FCE9DF;
+  --display:"Saira Extra Condensed","Arial Narrow",Impact,sans-serif;
+  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"Roboto Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0B111B; --surface:#121A27; --surface-2:#182233; --ink:#E6EBF3; --ink-2:#A6B1C3; --ink-3:#77839A; --line:#243045;
+    --head:#060D19; --head-ink:#E6EBF3;
+    --afc:#FF5A6E; --afc-soft:#311820; --nfc:#6FA5F0; --nfc-soft:#15243A;
+    --in:#5CC98A; --in-soft:#13291D; --bubble:#F0B048; --bubble-soft:#30250F; --out:#6C778B;
+    --live:#FF7B42; --live-bg:#3A2117;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0B111B; --surface:#121A27; --surface-2:#182233; --ink:#E6EBF3; --ink-2:#A6B1C3; --ink-3:#77839A; --line:#243045;
+  --head:#060D19; --head-ink:#E6EBF3;
+  --afc:#FF5A6E; --afc-soft:#311820; --nfc:#6FA5F0; --nfc-soft:#15243A;
+  --in:#5CC98A; --in-soft:#13291D; --bubble:#F0B048; --bubble-soft:#30250F; --out:#6C778B;
+  --live:#FF7B42; --live-bg:#3A2117;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--body);-webkit-font-smoothing:antialiased;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+[hidden]{display:none!important}
+a{color:inherit}
+button,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--nfc);outline-offset:2px;border-radius:4px}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.lbl{font:600 11px/1.2 var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+
+/* header */
+.head{background:var(--head);color:var(--head-ink);border-bottom:4px solid;border-image:linear-gradient(90deg,var(--afc) 0 50%,var(--nfc) 50% 100%) 1}
+.head .wrap{padding-block:18px 16px;display:flex;flex-wrap:wrap;gap:12px 28px;align-items:end;justify-content:space-between}
+.head h1{margin:0;font:800 clamp(36px,6vw,54px)/.9 var(--display);text-transform:uppercase;letter-spacing:.01em}
+.head .sub{margin-top:6px;font:500 13px/1.3 var(--mono);opacity:.75}
+.ctls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctl{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.26);color:var(--head-ink);border-radius:8px;padding:7px 11px;font:600 13.5px/1.1 var(--body);cursor:pointer}
+.ctl:hover{background:rgba(255,255,255,.15)}
+.ctl:disabled{opacity:.4;cursor:default}
+select.ctl option,select.ctl optgroup{color:#0F1A2B}
+.wknav{display:inline-flex;gap:6px;align-items:center;max-width:100%}
+.wknav select{max-width:min(220px,46vw)}
+.meta{width:100%;display:flex;flex-wrap:wrap;gap:4px 16px;font:500 12.5px/1.3 var(--mono);opacity:.85}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#7B8DA8;margin-right:6px;vertical-align:1px}
+.dot.on{background:#FF6A2B;animation:pulse 1.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,106,43,.6)}70%{box-shadow:0 0 0 8px rgba(255,106,43,0)}100%{box-shadow:0 0 0 0 rgba(255,106,43,0)}}
+
+main.wrap{padding-block:20px 36px;display:flex;flex-direction:column;gap:22px}
+.err{background:var(--live-bg);border:1px solid var(--live);border-radius:10px;padding:12px 14px;font-weight:500}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-width:0}
+.sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px 14px;flex-wrap:wrap;margin:0 0 10px}
+.sec-h h2{margin:0;font:800 28px/1 var(--display);text-transform:uppercase;letter-spacing:.02em}
+.sec-h .sub{font:500 12.5px/1.3 var(--mono);color:var(--ink-3)}
+
+/* my team */
+.mine{overflow:hidden}
+.mine-band{--tc:#333;--tt:#fff;background:var(--tc);color:var(--tt);padding:14px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.mine-band img{width:56px;height:56px;object-fit:contain;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25))}
+.mine-band .nm{font:800 34px/.95 var(--display);text-transform:uppercase;letter-spacing:.01em}
+.mine-band .rec{font:500 14px/1.3 var(--mono);opacity:.9}
+.mine-band .status{margin-left:auto;text-align:right}
+.mine-band .status b{display:block;font:800 26px/1 var(--display);text-transform:uppercase}
+.mine-band .status span{font:500 12.5px/1.2 var(--mono);opacity:.9}
+.mine-body{display:grid;grid-template-columns:minmax(0,1fr);gap:0}
+@media (min-width:900px){.mine-body{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}}
+.mine-col{padding:14px 16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.mine-col + .mine-col{border-top:1px solid var(--line)}
+@media (min-width:900px){.mine-col + .mine-col{border-top:0;border-left:1px solid var(--line)}}
+.path{margin:0;font-size:15.5px;max-width:62ch}
+.path b{font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.stats div{background:var(--surface);padding:9px 10px;display:flex;flex-direction:column;gap:3px}
+.stats .v{font:600 17px/1.1 var(--mono);font-variant-numeric:tabular-nums}
+@media (max-width:520px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.h3{margin:0;font:700 19px/1 var(--display);text-transform:uppercase;letter-spacing:.03em}
+.sched{list-style:none;margin:0;padding:0;font-size:14px}
+.sched li{display:grid;grid-template-columns:62px 22px minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.sched li:last-child{border-bottom:0}
+.sched img{width:22px;height:22px;object-fit:contain}
+.sched .wk{font:500 12px/1.2 var(--mono);color:var(--ink-3)}
+.sched .r{font:600 13px/1 var(--mono);text-align:right;white-space:nowrap}
+.sched .r.w{color:var(--in)} .sched .r.l{color:var(--afc)}
+.sched .op{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sched .op small{color:var(--ink-3);font:500 12px/1 var(--mono);margin-left:4px}
+.root{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.root li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center;padding:8px 10px;background:var(--surface-2);border-radius:8px;font-size:14px}
+.root .why{grid-column:1/-1;font-size:12.5px;color:var(--ink-3)}
+.pick{font:700 12px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;padding:5px 8px;border-radius:999px;background:var(--in-soft);color:var(--in);white-space:nowrap}
+.note{font:500 12px/1.4 var(--mono);color:var(--ink-3)}
+.pickprompt{padding:18px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.pickprompt p{margin:0;color:var(--ink-2)}
+.btn{background:var(--ink);color:var(--bg);border:0;border-radius:8px;padding:8px 14px;font:600 14px/1 var(--body);cursor:pointer}
+
+/* also watching */
+.watch{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:12px}
+.wcard{--tc:#333;background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--tc);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.wcard .top{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:10px;align-items:center}
+.wcard img{width:36px;height:36px;object-fit:contain}
+.wcard .nm{font:800 22px/1 var(--display);text-transform:uppercase}
+.wcard .nm small{display:block;font:500 12px/1.3 var(--mono);color:var(--ink-3);text-transform:none;margin-top:2px}
+.wcard .st{font:800 20px/1 var(--display);text-transform:uppercase;text-align:right}
+.wcard .st small{display:block;font:500 11.5px/1.2 var(--mono);color:var(--ink-3);text-transform:none}
+.wcard p{margin:0;font-size:14px;color:var(--ink-2)}
+.wcard .gl{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font:500 13px/1.3 var(--mono);color:var(--ink-2);border-top:1px solid var(--line);padding-top:8px}
+.wcard .gl a{font-family:var(--body);font-weight:600}
+.wedit{position:relative;font-size:13px}
+.wedit summary{cursor:pointer;color:var(--ink-2);font-weight:600;list-style:none}
+.wedit summary::-webkit-details-marker{display:none}
+.wgrid{position:absolute;right:0;top:26px;z-index:5;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;display:grid;grid-template-columns:repeat(4,minmax(64px,1fr));gap:4px 10px;width:min(92vw,420px);box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.wgrid label{display:flex;gap:5px;align-items:center;font:500 12.5px/1.3 var(--mono);cursor:pointer}
+.seed.watching .tn::after{content:"watching";font:600 9.5px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);border:1px solid var(--line);border-radius:3px;padding:2px 4px;margin-left:6px;vertical-align:2px}
+.div tr.watching td:first-child::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--ink-3);flex:none;margin-left:2px}
+
+/* playoff picture */
+.confs{display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+@media (min-width:980px){.confs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.conf{--cc:var(--afc);--cs:var(--afc-soft);overflow:hidden}
+.conf.nfc{--cc:var(--nfc);--cs:var(--nfc-soft)}
+.conf-h{display:flex;justify-content:space-between;align-items:baseline;padding:12px 14px;border-bottom:3px solid var(--cc)}
+.conf-h h3{margin:0;font:800 26px/1 var(--display);color:var(--cc);letter-spacing:.04em}
+.seeds{list-style:none;margin:0;padding:0}
+.seed{display:grid;grid-template-columns:30px 26px minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:7px 14px;border-bottom:1px solid var(--line);font-size:14.5px}
+.seed.me{background:var(--cs)}
+.seed .sn{font:800 22px/1 var(--display);text-align:center;color:var(--cc)}
+.seed img{width:26px;height:26px;object-fit:contain}
+.seed .tn{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.seed .tn small{font:500 12px/1 var(--mono);color:var(--ink-3);margin-left:6px;font-weight:400}
+.seed .wl{font:600 14px/1 var(--mono);font-variant-numeric:tabular-nums}
+.seed .tag{font:600 11px/1.1 var(--body);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);text-align:right;min-width:74px}
+.seed .tag.bye{color:var(--in)}
+.cut{display:flex;align-items:center;gap:8px;padding:5px 14px;background:var(--surface-2);font:600 11px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.cut::before,.cut::after{content:"";flex:1;height:1px;background:var(--line)}
+.seed.hunt .sn{color:var(--ink-3);font-size:18px}
+.seed.out{opacity:.55}
+.mark{display:inline-block;font:700 10px/1.3 var(--body);letter-spacing:.05em;border-radius:3px;padding:1px 4px;margin-left:6px;vertical-align:1px}
+.mark.cl{background:var(--in-soft);color:var(--in)}
+.mark.el{background:var(--surface-2);color:var(--out);border:1px solid var(--line)}
+.wc{padding:10px 14px 14px;display:flex;flex-direction:column;gap:6px}
+.wc .lbl{margin-bottom:2px}
+.mu{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:center;font-size:13.5px;padding:6px 10px;border-radius:8px;background:var(--surface-2)}
+.mu .vs{font:600 11px/1 var(--mono);color:var(--ink-3)}
+.mu span:last-child{text-align:right}
+.mu b{font:800 15px/1 var(--display);color:var(--cc);margin-right:4px}
+.mu span:last-child b{margin:0 0 0 4px}
+.toggle-hunt{background:none;border:0;color:var(--ink-2);font:600 12.5px/1 var(--body);cursor:pointer;padding:8px 14px;text-align:left;width:100%;border-bottom:1px solid var(--line)}
+
+/* games */
+.games{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:10px}
+.game{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 12px;display:flex;flex-direction:column;gap:5px;min-width:0}
+.game.live{border-color:color-mix(in srgb,var(--live) 50%,var(--line))}
+.game.mine-g{box-shadow:inset 4px 0 0 var(--ink)}
+.g-top{display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 9px;font:700 11.5px/1.2 var(--body);letter-spacing:.06em;text-transform:uppercase;background:var(--surface-2);color:var(--ink-2);white-space:nowrap}
+.pill.live{background:var(--live-bg);color:var(--live)}
+.pill.live::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.25}}
+.pill.final{background:transparent;border:1px solid var(--line)}
+.tv{font:500 11.5px/1 var(--mono);color:var(--ink-3)}
+.trow{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:8px;align-items:center}
+.trow img{width:24px;height:24px;object-fit:contain}
+.trow .tn{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trow .tn small{font:500 12px/1 var(--mono);color:var(--ink-3);margin-left:6px;font-weight:400}
+.trow .sc{font:800 24px/1 var(--display);font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:6px}
+.trow.lose .tn,.trow.lose .sc{color:var(--ink-3)}
+.ballico{width:12px;height:8px;color:var(--live)}
+.g-foot{display:flex;justify-content:space-between;gap:6px 10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:6px;font-size:12.5px;color:var(--ink-3)}
+.g-foot .dd{color:var(--ink-2);font-weight:600}
+.g-foot a{font-weight:600;color:var(--ink-2)}
+.impact{font:700 10.5px/1.3 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--bubble);background:var(--bubble-soft);border-radius:4px;padding:2px 6px}
+
+/* divisions */
+.divs{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+@media (min-width:600px){.divs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (min-width:1100px){.divs{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.div{overflow:hidden}
+.div h4{margin:0;padding:9px 12px;font:800 18px/1 var(--display);text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid var(--cc,var(--line))}
+.div.afc{--cc:var(--afc)} .div.nfc{--cc:var(--nfc)}
+.div .tw{overflow-x:auto}
+.div table{width:100%;border-collapse:collapse;font-size:13.5px}
+.div th{font:600 10.5px/1 var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);text-align:right;padding:6px 7px}
+.div th:first-child{text-align:left}
+.div td{padding:6px 7px;border-top:1px solid var(--line);text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.div td:first-child{text-align:left;font-family:var(--body);font-weight:600;display:flex;gap:7px;align-items:center}
+.div td img{width:18px;height:18px;object-fit:contain}
+.div tr.me td{background:var(--cs,var(--surface-2))}
+.div.afc tr.me td{background:var(--afc-soft)} .div.nfc tr.me td{background:var(--nfc-soft)}
+
+footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
+.skel{height:160px;border-radius:12px;background:linear-gradient(90deg,var(--surface) 0%,var(--surface-2) 50%,var(--surface) 100%);background-size:200% 100%;animation:sh 1.4s infinite;border:1px solid var(--line)}
+@keyframes sh{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+@media (max-width:520px){
+  .mine-band .status{margin-left:0;text-align:left;width:100%}
+  .seed{grid-template-columns:26px 22px minmax(0,1fr) auto;padding:7px 10px}
+  .seed .tag{grid-column:3/-1;text-align:left;min-width:0;margin-top:-2px}
+  .seed img{width:22px;height:22px}
+}
+</style>
+</head>
+<body>
+<nav class="sitenav" aria-label="Dashboards"><div class="sitenav-in"><a href="./"><img src="icons/home-64.png" alt="">Home</a><a href="weather.html"><img src="icons/weather-64.png" alt="">Weather</a><a href="college.html"><img src="icons/college-64.png" alt="">College</a><a href="nfl.html" aria-current="page"><img src="icons/nfl-64.png" alt="">NFL</a></div></nav>
+
+<div class="head">
+  <div class="wrap">
+    <div>
+      <h1>NFL Playoff Path</h1>
+      <div class="sub" id="season">Seven teams per conference · only the #1 seed gets a bye</div>
+    </div>
+    <div class="ctls">
+      <select id="team" class="ctl" aria-label="My team"><option value="">My team…</option></select>
+      <span class="wknav">
+        <button id="prevwk" class="ctl" type="button" aria-label="Previous week" disabled>‹ Prev</button>
+        <select id="week" class="ctl" aria-label="Week"><option>Loading…</option></select>
+        <button id="nextwk" class="ctl" type="button" aria-label="Next week" disabled>Next ›</button>
+      </span>
+      <button id="refresh" class="ctl" type="button">Refresh</button>
+    </div>
+    <div class="meta" aria-live="polite"><span><span id="dot" class="dot"></span><span id="livecount">Connecting…</span></span><span id="updated"></span><span id="next"></span></div>
+  </div>
+</div>
+
+<main class="wrap">
+  <div id="err" class="err" hidden></div>
+
+  <section aria-labelledby="gm-h">
+    <div class="sec-h"><h2 id="gm-h">This week’s games</h2><span class="sub" id="gm-sub"></span></div>
+    <div class="games" id="games"><div class="skel"></div></div>
+  </section>
+
+  <section id="mine" class="card mine"><div class="skel" style="border:0"></div></section>
+  <section aria-labelledby="w-h" id="watchsec">
+    <div class="sec-h"><h2 id="w-h">Also watching</h2>
+      <details class="wedit" id="wedit"><summary>Change teams</summary><div class="wgrid" id="wgrid"></div></details>
+    </div>
+    <div class="watch" id="watch"></div>
+  </section>
+
+  <section aria-labelledby="pic-h">
+    <div class="sec-h"><h2 id="pic-h">If the season ended today</h2><span class="sub">Seeds as ESPN ranks them, tiebreakers applied</span></div>
+    <div class="confs" id="confs"><div class="skel"></div><div class="skel"></div></div>
+  </section>
+
+
+  <section aria-labelledby="dv-h">
+    <div class="sec-h"><h2 id="dv-h">Divisions</h2><span class="sub">GB = games behind the division leader · ● = also watching</span></div>
+    <div class="divs" id="divs"></div>
+  </section>
+</main>
+
+<footer class="wrap small">
+  Scores, standings and seeds come from ESPN's public NFL feed and refresh every 30 seconds while games are live. “Clinched” and “Eliminated” tags use ESPN's markers when posted; otherwise the page only marks a team when the math leaves no doubt by wins alone. The rooting guide is a simple read of the standings and ignores tiebreakers. Times are shown in your local time zone. Not affiliated with the NFL or ESPN.
+</footer>
+
+<script>
+(() => {
+  "use strict";
+  const API = "https://site.api.espn.com/apis/site/v2/sports/football/nfl";
+  const STAND = "https://site.api.espn.com/apis/v2/sports/football/nfl/standings";
+  const GAMES = 17, SPOTS = 7;
+  const DIVS = {
+    "AFC East": ["BUF", "MIA", "NE", "NYJ"], "AFC North": ["BAL", "CIN", "CLE", "PIT"],
+    "AFC South": ["HOU", "IND", "JAX", "TEN"], "AFC West": ["DEN", "KC", "LV", "LAC"],
+    "NFC East": ["DAL", "NYG", "PHI", "WSH"], "NFC North": ["CHI", "DET", "GB", "MIN"],
+    "NFC South": ["ATL", "CAR", "NO", "TB"], "NFC West": ["ARI", "LAR", "SF", "SEA"]
+  };
+  const ALIAS = { WAS: "WSH", LA: "LAR", JAC: "JAX", OAK: "LV", SD: "LAC", STL: "LAR" };
+  const DIV_OF = {}; Object.entries(DIVS).forEach(([d, ts]) => ts.forEach(t => DIV_OF[t] = d));
+  const ab = a => ALIAS[a] || a;
+
+  // Defaults: Broncos as "my team", Eagles and 49ers as "also watching". Both are changeable on the page.
+  const DEFAULT_MY = "DEN", DEFAULT_WATCH = ["PHI", "SF"];
+  const S = { teams: [], byId: {}, colors: {}, events: [], week: null, current: null, calendar: [], my: "", myChosen: false, watch: DEFAULT_WATCH.slice(), sched: null, auto: true, timer: null, nextAt: null, showHunt: { AFC: false, NFC: false } };
+  try {
+    const v = JSON.parse(localStorage.getItem("nflpath") || "{}");
+    if ("my" in v) { S.my = v.my || ""; S.myChosen = true; }
+    if (Array.isArray(v.watch)) S.watch = v.watch;
+    if (v.showHunt) S.showHunt = v.showHunt;
+  } catch (e) {}
+  const save = () => { try { localStorage.setItem("nflpath", JSON.stringify({ my: S.my, watch: S.watch, showHunt: S.showHunt })); } catch (e) {} };
+  const watched = t => !!t && S.watch.includes(t.abbr) && t.id !== S.my;
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const fKick = new Intl.DateTimeFormat(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" });
+  const fDate = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" });
+  const fClock = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit", second: "2-digit" });
+  const BALL = '<svg class="ballico" viewBox="0 0 16 10" aria-label="Has the ball" role="img"><ellipse cx="8" cy="5" rx="7.5" ry="4.5" fill="currentColor"/><path d="M5 5h6M6.5 3.8v2.4M8 3.8v2.4M9.5 3.8v2.4" stroke="#fff" stroke-width="1"/></svg>';
+
+  async function getJSON(url, ms = 12000) {
+    const c = new AbortController(); const t = setTimeout(() => c.abort(), ms);
+    try { const r = await fetch(url, { signal: c.signal, cache: "no-store" }); if (!r.ok) throw new Error("HTTP " + r.status); return await r.json(); }
+    finally { clearTimeout(t); }
+  }
+
+  /* ---------- standings ---------- */
+  function parseStandings(d) {
+    const out = [];
+    const walk = node => {
+      if (node.standings?.entries?.length) {
+        for (const e of node.standings.entries) {
+          const st = e.stats || [];
+          const get = k => st.find(s => s.name === k || s.type === k);
+          const num = k => { const s = get(k); if (!s) return null; const v = s.value ?? parseFloat(s.displayValue); return isNaN(v) ? null : v; };
+          const rec = re => { const s = st.find(x => re.test(x.name || "") || re.test(x.displayName || "") || re.test(x.type || "") || re.test(x.shortDisplayName || "")); return s && /^\d+-\d+(-\d+)?$/.test(s.displayValue || s.summary || "") ? (s.displayValue || s.summary) : ""; };
+          const t = e.team || {};
+          const a = ab(t.abbreviation);
+          const w = num("wins") || 0, l = num("losses") || 0, ti = num("ties") || 0;
+          out.push({
+            id: String(t.id), abbr: a, name: t.shortDisplayName || t.name, full: t.displayName, loc: t.location,
+            logo: t.logos?.[0]?.href || "", div: DIV_OF[a] || "", conf: (DIV_OF[a] || "").slice(0, 3),
+            w, l, t: ti, gp: w + l + ti, pct: w + l + ti ? (w + ti / 2) / (w + l + ti) : 0,
+            seed: num("playoffSeed"), pf: num("pointsFor"), pa: num("pointsAgainst"),
+            diff: num("pointDifferential") ?? num("differential"), streak: get("streak")?.displayValue || "",
+            clincher: (get("clincher")?.displayValue || "").trim(),
+            divRec: get("divisionRecord")?.displayValue || rec(/vs\.?\s*div|division/i), confRec: rec(/vs\.?\s*conf|conference/i)
+          });
+        }
+      }
+      (node.children || []).forEach(walk);
+    };
+    walk(d);
+    return out;
+  }
+  const W = t => t.w + t.t / 2, L = t => t.l + t.t / 2;
+  const gb = (a, b) => ((W(b) - W(a)) + (L(a) - L(b))) / 2;   // games a is behind b
+  const rec = t => `${t.w}-${t.l}${t.t ? "-" + t.t : ""}`;
+  const fmtGB = g => g === 0 ? "—" : (g % 1 ? g.toFixed(1) : String(g));
+
+  function seedsFor(conf) {
+    const ts = S.teams.filter(t => t.conf === conf);
+    if (ts.every(t => t.seed)) return ts.slice().sort((a, b) => a.seed - b.seed);
+    // Fallback if seeds are missing: division leaders by record, then the rest.
+    const leaders = Object.keys(DIVS).filter(d => d.startsWith(conf)).map(d => ts.filter(t => t.div === d).sort((a, b) => b.pct - a.pct)[0]).filter(Boolean);
+    const rest = ts.filter(t => !leaders.includes(t)).sort((a, b) => b.pct - a.pct);
+    return leaders.sort((a, b) => b.pct - a.pct).concat(rest);
+  }
+  function divTable(d) { return S.teams.filter(t => t.div === d).sort((a, b) => b.pct - a.pct || (b.diff || 0) - (a.diff || 0)); }
+  const leaderOf = d => { const sd = seedsFor(d.slice(0, 3)); return sd.find(t => t.div === d) || divTable(d)[0]; };
+
+  // Conservative status: ESPN's clincher marker first, otherwise only certain-by-wins cases.
+  function status(t) {
+    const c = t.clincher.toLowerCase();
+    if (c === "e") return "out";
+    if (["x", "y", "z", "*"].includes(c)) return c === "z" ? "bye" : c === "y" || c === "*" ? "div" : "in";
+    const conf = S.teams.filter(o => o.conf === t.conf && o !== t);
+    const maxW = o => W(o) + (GAMES - o.gp);
+    const myMax = maxW(t);
+    const rivalAbove = conf.some(o => o.div === t.div && W(o) > myMax);
+    if (rivalAbove && conf.filter(o => W(o) > myMax).length >= SPOTS) return "out";
+    if (conf.filter(o => o.div === t.div).every(o => maxW(o) < W(t))) return "div";
+    if (conf.filter(o => maxW(o) >= W(t)).length <= SPOTS - 1) return "in";
+    return "";
+  }
+  const markHTML = st => st === "out" ? '<span class="mark el">Out</span>' : st === "bye" ? '<span class="mark cl">Bye</span>' : st === "div" ? '<span class="mark cl">Div</span>' : st === "in" ? '<span class="mark cl">In</span>' : "";
+
+  /* ---------- games ---------- */
+  function normTeam(x) {
+    const t = x.team || {};
+    const s = x.score;
+    return {
+      id: String(t.id ?? x.id ?? ""), abbr: ab(t.abbreviation || ""), homeAway: x.homeAway,
+      name: t.shortDisplayName || t.name || t.abbreviation || "TBD", logo: t.logo || t.logos?.[0]?.href || "",
+      score: s == null ? null : typeof s === "object" ? (s.displayValue ?? s.value) : s,
+      record: (x.records || x.record || []).find?.(r => r.type === "total")?.summary || (x.records || [])[0]?.summary || "",
+      winner: x.winner === true
+    };
+  }
+  function norm(ev) {
+    const c = ev.competitions?.[0] || {}; const st = c.status || ev.status || {}; const ty = st.type || {};
+    const cs = (c.competitors || []).map(normTeam);
+    const away = cs.find(t => t.homeAway === "away") || cs[0], home = cs.find(t => t.homeAway === "home") || cs[1];
+    return {
+      id: String(ev.id), date: new Date(ev.date), state: ty.state || "pre", detail: ty.shortDetail || ty.detail || "",
+      away, home, sit: c.situation || null, tv: c.broadcasts?.[0]?.names?.join(" / ") || c.broadcast || "",
+      week: ev.week?.number, link: (ev.links || []).find(l => (l.rel || []).includes("summary"))?.href || `https://www.espn.com/nfl/game/_/gameId/${ev.id}`,
+      note: c.notes?.[0]?.headline || ""
+    };
+  }
+  const team = id => S.byId[id];
+  function pill(g) {
+    if (g.state === "in") return `<span class="pill live">${esc(g.detail || "Live")}</span>`;
+    if (g.state === "post") return `<span class="pill final">${esc(g.detail || "Final")}</span>`;
+    if (/postponed|canceled|delayed/i.test(g.detail)) return `<span class="pill">${esc(g.detail)}</span>`;
+    return `<span class="pill">${esc(fKick.format(g.date))}</span>`;
+  }
+
+  /* ---------- rooting guide (simple, ignores tiebreakers) ---------- */
+  function raceInfo(me) {
+    const sd = seedsFor(me.conf);
+    const seed7 = sd[SPOTS - 1], seed8 = sd[SPOTS];
+    const myIdx = sd.indexOf(me);
+    const lead = leaderOf(me.div);
+    const divGB = lead === me ? 0 : gb(me, lead);
+    const left = GAMES - me.gp;
+    const inDivRace = lead !== me ? divGB <= left : true;
+    // competitors: same-conference teams near the cut line relative to me
+    const comps = new Set();
+    sd.forEach((t, i) => {
+      if (t === me) return;
+      const close = Math.abs(gb(me, t)) <= Math.max(2, Math.min(4, left / 3 + 1));
+      if (t.div === me.div && inDivRace && close) comps.add(t.id);
+      else if (close && (i >= 4 || myIdx >= 4) && i <= SPOTS + 3) comps.add(t.id);
+    });
+    return { sd, seed7, seed8, myIdx, lead, divGB, left, comps };
+  }
+  function rootFor(g, me, R) {
+    if (!me || g.state === "post") return null;
+    const a = team(g.away.id), h = team(g.home.id);
+    if (!a || !h || a === me || h === me) return null;
+    const ca = R.comps.has(a.id), ch = R.comps.has(h.id);
+    if (!ca && !ch) return null;
+    let pick, why;
+    if (ca && ch) {
+      const worse = a.pct < h.pct ? a : h.pct < a.pct ? h : (a.div === me.div ? h : a);
+      const other = worse === a ? h : a;
+      pick = worse; why = `Both are in your race; a ${other.name} loss keeps the closer threat in check.`;
+      if (a.div === me.div && h.div !== me.div) { pick = h; why = `${a.name} is a division rival.`; }
+      if (h.div === me.div && a.div !== me.div) { pick = a; why = `${h.name} is a division rival.`; }
+    } else {
+      const threat = ca ? a : h; pick = ca ? h : a;
+      const ahead = threat.pct > me.pct;
+      why = threat.div === me.div ? (ahead ? `${threat.name} (${rec(threat)}) is ahead of you in the ${me.div}.` : `${threat.name} (${rec(threat)}) is chasing you in the ${me.div}.`) : `${threat.name} (${rec(threat)}) is in the ${me.conf} wild-card race.`;
+    }
+    return { pick, why };
+  }
+
+  /* ---------- rendering ---------- */
+  function lum(hex) { const h = (hex || "").replace("#", ""); if (h.length !== 6) return 0; const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(v => v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4)); return .2126 * r + .7152 * g + .0722 * b; }
+
+  function renderMine() {
+    const el = $("mine");
+    const me = team(S.my);
+    if (!me) {
+      el.innerHTML = `<div class="pickprompt"><p><b>Pick your team</b> to see its seed, its path to the playoffs, its remaining schedule and who to root for this week.</p><button class="btn" type="button" id="pickbtn">Choose a team</button></div>`;
+      $("pickbtn").onclick = () => $("team").focus();
+      return;
+    }
+    const R = raceInfo(me);
+    const col = S.colors[me.id] || {};
+    let tc = col.color ? "#" + col.color : "#333333";
+    const tt = lum(tc) > .45 ? "#0F1A2B" : "#FFFFFF";
+    const st = status(me);
+    const seedNo = R.myIdx + 1;
+    let headline, sub, path;
+    const lead = R.lead, s7 = R.seed7, s8 = R.seed8;
+    if (st === "out") { headline = "Eliminated"; sub = `${me.conf} · out of playoff contention`; }
+    else if (seedNo <= SPOTS) { headline = `#${seedNo} seed`; sub = seedNo === 1 ? "First-round bye" : seedNo <= 4 ? `${me.div} leader` : "Wild card"; }
+    else { headline = "In the hunt"; sub = gb(me, s7) ? `${fmtGB(gb(me, s7))} GB of the #7 seed` : "Tied with the #7 seed, behind on tiebreakers"; }
+
+    if (st === "out") path = `The ${me.name} can no longer reach the playoffs.`;
+    else if (seedNo === 1) path = `<b>Holds the #1 seed</b> and the ${me.conf}'s only first-round bye. The #2 seed, ${esc(R.sd[1].name)}, is ${fmtGB(gb(R.sd[1], me))} game${gb(R.sd[1], me) === 1 ? "" : "s"} back.`;
+    else if (lead === me) {
+      const second = divTable(me.div).find(t => t !== me);
+      const magic = second ? Math.max(0, GAMES + 1 - Math.round(W(me)) - Math.round(L(second))) : null;
+      const lg = gb(second, me);
+      path = `<b>${lg ? `Leads the ${me.div}` : `Tied for the ${me.div} lead`}</b> ${lg ? `by ${fmtGB(lg)} over` : "with"} the ${esc(second.name)}${lg ? "" : ", holding the tiebreaker for now,"} and would host a wild-card game as the #${seedNo} seed. ${magic != null && magic > 0 ? `Magic number to clinch the division: <b>${magic}</b> (any combination of ${me.name} wins and ${second.name} losses).` : ""} The #1 seed and bye are ${fmtGB(gb(me, R.sd[0]))} games away.`;
+    } else if (seedNo <= SPOTS) {
+      path = `<b>Holds wild-card spot #${seedNo - 4}</b>, ${gb(s8, me) ? `${fmtGB(gb(s8, me))} game${gb(s8, me) === 1 ? "" : "s"} ahead of` : "tied on record with, but ahead on tiebreakers of,"} the first team out (${esc(s8.name)}, ${rec(s8)}). ${R.divGB ? `Trails the ${esc(lead.name)} by ${fmtGB(R.divGB)} in the ${me.div}.` : ""}`;
+    } else {
+      path = `<b>${gb(me, s7) ? `${fmtGB(gb(me, s7))} game${gb(me, s7) === 1 ? "" : "s"} behind` : "Tied on record (but behind on tiebreakers) with"}</b> the ${esc(s7.name)} (${rec(s7)}) for the last wild card, and ${fmtGB(R.divGB)} behind the ${esc(lead.name)} in the ${me.div}. ${R.left} game${R.left === 1 ? "" : "s"} left.`;
+    }
+
+    // remaining schedule from team schedule
+    let schedHTML = `<p class="note">Loading schedule…</p>`, sosTxt = "";
+    if (S.sched && S.sched.id === me.id) {
+      const evs = S.sched.events;
+      const remaining = evs.filter(g => g.state !== "post");
+      const opps = remaining.map(g => team(g.away.id === me.id ? g.home.id : g.away.id)).filter(Boolean);
+      if (opps.length) {
+        const ow = opps.reduce((s, o) => s + W(o), 0), ol = opps.reduce((s, o) => s + L(o), 0);
+        sosTxt = `Remaining opponents: ${Math.round(ow)}-${Math.round(ol)} combined (${(ow / Math.max(1, ow + ol)).toFixed(3).replace(/^0/, "")}).`;
+      }
+      const recent = evs.filter(g => g.state === "post").slice(-2);
+      schedHTML = `<ul class="sched">${recent.concat(remaining).map(g => {
+        const home = g.home.id === me.id; const opp = home ? g.away : g.home; const ot = team(opp.id); const mine = home ? g.home : g.away;
+        let r = "";
+        if (g.state === "post") { const won = +mine.score > +opp.score, tie = +mine.score === +opp.score; r = `<span class="r ${won ? "w" : tie ? "" : "l"}">${won ? "W" : tie ? "T" : "L"} ${esc(mine.score)}-${esc(opp.score)}</span>`; }
+        else if (g.state === "in") r = `<span class="r" style="color:var(--live)">${esc(mine.score)}-${esc(opp.score)} live</span>`;
+        else r = `<span class="r" style="color:var(--ink-3)">${fDate.format(g.date)}</span>`;
+        return `<li><span class="wk">${g.week ? "Wk " + g.week : fDate.format(g.date)}</span>${opp.logo ? `<img src="${esc(opp.logo)}" alt="" loading="lazy">` : "<span></span>"}<span class="op">${home ? "vs" : "at"} ${esc(ot?.name || opp.name)}<small>${ot ? rec(ot) : ""}${ot && ot.div === me.div ? " · div" : ""}</small></span>${r}</li>`;
+      }).join("")}</ul>`;
+    } else if (S.sched && S.sched.error) schedHTML = `<p class="note">The schedule didn't load.</p>`;
+
+    // rooting guide for this week
+    const guide = S.events.map(g => ({ g, r: rootFor(g, me, R) })).filter(x => x.r);
+    const myGame = S.events.find(g => g.away.id === me.id || g.home.id === me.id);
+    const guideHTML = guide.length ? `<ul class="root">${guide.map(({ g, r }) => {
+      const other = r.pick.id === g.away.id ? team(g.home.id) : team(g.away.id);
+      return `<li><span>${esc(team(g.away.id).name)} at ${esc(team(g.home.id).name)} <span class="note">· ${g.state === "in" ? "live " + esc(g.away.score) + "-" + esc(g.home.score) : esc(fKick.format(g.date))}</span></span><span class="pick">Root for ${esc(r.pick.abbr)}</span><span class="why">${esc(r.why)}</span></li>`;
+    }).join("")}</ul>` : `<p class="note">${S.events.every(g => g.state === "post") && S.events.length ? "This week's games are finished." : "No games this week directly involve teams in your race."}</p>`;
+
+    el.innerHTML = `
+      <div class="mine-band" style="--tc:${esc(tc)};--tt:${tt}">
+        ${me.logo ? `<img src="${esc(me.logo)}" alt="">` : ""}
+        <div><div class="nm">${esc(me.full)}</div><div class="rec">${rec(me)} · ${esc(me.div)}${me.streak ? " · " + esc(me.streak) : ""}</div></div>
+        <div class="status"><b>${esc(headline)}</b><span>${esc(sub)}</span></div>
+      </div>
+      <div class="mine-body">
+        <div class="mine-col">
+          <p class="path">${path}</p>
+          <div class="stats">
+            <div><span class="lbl">Division</span><span class="v">${esc(me.divRec || "–")}</span></div>
+            <div><span class="lbl">Conference</span><span class="v">${esc(me.confRec || "–")}</span></div>
+            <div><span class="lbl">Point diff</span><span class="v">${me.diff != null ? (me.diff > 0 ? "+" : "") + me.diff : "–"}</span></div>
+            <div><span class="lbl">Games left</span><span class="v">${R.left}</span></div>
+          </div>
+          <h3 class="h3">Schedule</h3>
+          ${schedHTML}
+          ${sosTxt ? `<p class="note">${sosTxt}</p>` : ""}
+        </div>
+        <div class="mine-col">
+          <h3 class="h3">This week</h3>
+          ${myGame ? gameCard(myGame) : `<p class="note">${S.events.length ? "Bye week." : "Loading…"}</p>`}
+          <h3 class="h3">Rooting guide</h3>
+          ${guideHTML}
+          <p class="note">Based on current standings only; tiebreakers can change who matters most.</p>
+        </div>
+      </div>`;
+  }
+
+  function renderConfs() {
+    const me = team(S.my);
+    $("confs").innerHTML = ["AFC", "NFC"].map(conf => {
+      const sd = seedsFor(conf);
+      if (!sd.length) return `<div class="card conf ${conf.toLowerCase()}"><div class="conf-h"><h3>${conf}</h3></div><p class="note" style="padding:14px">Standings unavailable.</p></div>`;
+      const s7 = sd[SPOTS - 1], s8 = sd[SPOTS];
+      const row = (t, i) => {
+        const st = status(t);
+        const n = i + 1;
+        let tag;
+        if (n === 1) tag = '<span class="tag bye">Bye</span>';
+        else if (n <= 4) tag = `<span class="tag">${esc(t.div.replace(conf + " ", ""))} leader</span>`;
+        else if (n <= SPOTS) { const c = gb(s8, t); tag = `<span class="tag">${c ? "+" + fmtGB(c) + " on #8" : "Tied with #8"}</span>`; }
+        else { const g = gb(t, s7); tag = `<span class="tag">${st === "out" ? "Eliminated" : g ? fmtGB(g) + " GB" : "Tied with #7"}</span>`; }
+        return `<li class="seed${n > SPOTS ? " hunt" : ""}${st === "out" ? " out" : ""}${me === t ? " me" : ""}${watched(t) ? " watching" : ""}">
+          <span class="sn">${n}</span>${t.logo ? `<img src="${esc(t.logo)}" alt="" loading="lazy">` : "<span></span>"}
+          <span class="tn">${esc(t.name)}${markHTML(st === "out" ? "" : st)}<small>${esc(t.streak)}</small></span>
+          <span class="wl">${rec(t)}</span>${tag}</li>`;
+      };
+      const huntAll = sd.slice(SPOTS);
+      const hunt = S.showHunt[conf] ? huntAll : huntAll.filter((t, i) => i < 3 || t === me || watched(t));
+      const mu = (a, b) => `<div class="mu"><span><b>${sd.indexOf(a) + 1}</b>${esc(a.name)}</span><span class="vs">vs</span><span>${esc(b.name)}<b>${sd.indexOf(b) + 1}</b></span></div>`;
+      return `<div class="card conf ${conf.toLowerCase()}">
+        <div class="conf-h"><h3>${conf}</h3><span class="note">${sd.length} teams</span></div>
+        <ol class="seeds">${sd.slice(0, SPOTS).map(row).join("")}</ol>
+        <div class="cut">Outside looking in</div>
+        <ol class="seeds">${hunt.map(t => row(t, sd.indexOf(t))).join("")}</ol>
+        ${huntAll.length > 3 ? `<button class="toggle-hunt" type="button" data-conf="${conf}">${S.showHunt[conf] ? "Show fewer" : `Show all ${huntAll.length} teams outside`}</button>` : ""}
+        <div class="wc"><span class="lbl">Wild Card round, if it started today · #1 ${esc(sd[0].name)} rests</span>
+          ${mu(sd[1], sd[6])}${mu(sd[2], sd[5])}${mu(sd[3], sd[4])}
+        </div>
+      </div>`;
+    }).join("");
+    document.querySelectorAll(".toggle-hunt").forEach(b => b.onclick = () => { S.showHunt[b.dataset.conf] = !S.showHunt[b.dataset.conf]; save(); renderConfs(); });
+  }
+
+  function teamRow(g, t, o) {
+    const T = team(t.id);
+    const lose = g.state === "post" && o.winner && !t.winner;
+    const poss = g.state === "in" && g.sit?.possession && String(g.sit.possession) === t.id;
+    const seedNo = T ? seedsFor(T.conf).indexOf(T) + 1 : 0;
+    return `<div class="trow${lose ? " lose" : ""}">${t.logo ? `<img src="${esc(t.logo)}" alt="" loading="lazy">` : "<span></span>"}
+      <span class="tn">${esc(T?.name || t.name)}<small>${T ? rec(T) : esc(t.record)}${seedNo && seedNo <= SPOTS ? " · #" + seedNo : ""}</small></span>
+      <span class="sc">${poss ? BALL : ""}${g.state === "pre" ? "" : esc(t.score ?? "")}</span></div>`;
+  }
+  function gameCard(g) {
+    const me = team(S.my);
+    const mine = me && (g.away.id === me.id || g.home.id === me.id);
+    const R = me ? raceInfo(me) : null;
+    const rel = me && !mine && R && (R.comps.has(g.away.id) || R.comps.has(g.home.id));
+    const dd = g.state === "in" ? (g.sit?.downDistanceText || "") : "";
+    return `<article class="game${g.state === "in" ? " live" : ""}${mine ? " mine-g" : ""}">
+      <div class="g-top">${pill(g)}${rel ? '<span class="impact">Affects your race</span>' : ""}${!mine && (watched(team(g.away.id)) || watched(team(g.home.id))) ? '<span class="impact" style="color:var(--ink-2);background:var(--surface-2)">Watching</span>' : ""}<span class="tv">${esc(g.tv)}</span></div>
+      ${teamRow(g, g.away, g.home)}${teamRow(g, g.home, g.away)}
+      <div class="g-foot"><span class="${dd ? "dd" : ""}">${esc(dd || g.note || "")}</span><a href="${esc(g.link)}" target="_blank" rel="noopener">Gamecast</a></div>
+    </article>`;
+  }
+  function renderGames() {
+    const me = team(S.my);
+    const order = { in: 0, pre: 1, post: 2 };
+    const list = S.events.slice().sort((a, b) => {
+      const ma = me && (a.away.id === me.id || a.home.id === me.id) ? 0 : 1, mb = me && (b.away.id === me.id || b.home.id === me.id) ? 0 : 1;
+      const wa = watched(team(a.away.id)) || watched(team(a.home.id)) ? 0 : 1, wb = watched(team(b.away.id)) || watched(team(b.home.id)) ? 0 : 1;
+      return ma - mb || (order[a.state] - order[b.state]) || wa - wb || (a.date - b.date);
+    });
+    $("games").innerHTML = list.length ? list.map(gameCard).join("") : `<p class="note">No games scheduled this week.</p>`;
+    const live = S.events.filter(g => g.state === "in").length;
+    $("gm-sub").textContent = S.events.length ? `${S.events.length} games${live ? ` · ${live} live` : ""}` : "";
+  }
+  function renderDivs() {
+    const me = team(S.my);
+    $("divs").innerHTML = Object.keys(DIVS).map(d => {
+      const rows = divTable(d); if (!rows.length) return "";
+      const lead = rows[0];
+      return `<div class="card div ${d.slice(0, 3).toLowerCase()}"><h4>${d}</h4><div class="tw"><table>
+        <thead><tr><th>Team</th><th>W-L</th><th>GB</th><th>Div</th><th>Strk</th></tr></thead>
+        <tbody>${rows.map(t => `<tr class="${t === me ? "me" : watched(t) ? "watching" : ""}"><td>${t.logo ? `<img src="${esc(t.logo)}" alt="" loading="lazy">` : ""}${esc(t.name)}</td><td>${rec(t)}</td><td>${fmtGB(gb(t, lead))}</td><td>${esc(t.divRec || "–")}</td><td>${esc(t.streak || "–")}</td></tr>`).join("")}</tbody></table></div></div>`;
+    }).join("");
+  }
+  function renderTeamSelect() {
+    const sel = $("team");
+    const opts = ["AFC", "NFC"].map(c => `<optgroup label="${c}">${S.teams.filter(t => t.conf === c).sort((a, b) => a.full.localeCompare(b.full)).map(t => `<option value="${t.id}"${t.id === S.my ? " selected" : ""}>${esc(t.full)}</option>`).join("")}</optgroup>`).join("");
+    sel.innerHTML = `<option value="">My team…</option>${opts}`;
+  }
+  function renderWeeks() {
+    const sel = $("week"); if (!S.calendar.length) return;
+    const cur = S.week || S.current;
+    sel.innerHTML = S.calendar.map(gp => `<optgroup label="${esc(gp.label)}">${gp.entries.map(e => {
+      const isCur = S.current && S.current.type === gp.type && String(S.current.week) === String(e.value);
+      const seld = cur && cur.type === gp.type && String(cur.week) === String(e.value);
+      return `<option value="${gp.type}:${esc(e.value)}"${seld ? " selected" : ""}>${esc(e.label)}${isCur ? " (this week)" : ""}</option>`;
+    }).join("")}</optgroup>`).join("");
+    $("prevwk").disabled = sel.selectedIndex <= 0;
+    $("nextwk").disabled = sel.selectedIndex < 0 || sel.selectedIndex >= sel.options.length - 1;
+  }
+  function summaryFor(t) {
+    const sd = seedsFor(t.conf), n = sd.indexOf(t) + 1, st = status(t);
+    const s7 = sd[SPOTS - 1], lead = leaderOf(t.div);
+    if (st === "out") return ["Out", "Eliminated", `Out of playoff contention at ${rec(t)}.`];
+    if (n === 1) return ["#1 seed", "Bye", `Leads the ${t.conf} and holds the only bye.`];
+    if (n <= 4) return [`#${n} seed`, `${t.div} leader`, `Leads the ${t.div}${divTable(t.div)[1] ? ` by ${fmtGB(gb(divTable(t.div)[1], t))}` : ""}.`];
+    if (n <= SPOTS) return [`#${n} seed`, "Wild card", `${gb(sd[SPOTS], t) ? fmtGB(gb(sd[SPOTS], t)) + " ahead of" : "Tied with"} the first team out; ${lead === t ? "" : fmtGB(gb(t, lead)) + " behind the " + lead.name + " in the division."}`];
+    return [`#${n}`, "In the hunt", `${gb(t, s7) ? fmtGB(gb(t, s7)) + " games behind" : "Tied with"} the #7 seed (${s7.name}); ${fmtGB(gb(t, lead))} behind the ${lead.name} in the ${t.div}.`];
+  }
+  function renderWatch() {
+    const list = S.watch.map(a => S.teams.find(t => t.abbr === a)).filter(t => t && t.id !== S.my);
+    $("wgrid").innerHTML = S.teams.slice().sort((a, b) => a.abbr.localeCompare(b.abbr)).map(t => `<label><input type="checkbox" value="${t.abbr}"${S.watch.includes(t.abbr) ? " checked" : ""}> ${t.abbr}</label>`).join("");
+    $("watch").innerHTML = list.length ? list.map(t => {
+      const [big, small, line] = summaryFor(t);
+      const g = S.events.find(e => e.away.id === t.id || e.home.id === t.id);
+      let gl = S.events.length ? "Bye week" : "";
+      if (g) {
+        const home = g.home.id === t.id, mine = home ? g.home : g.away, opp = home ? g.away : g.home, on = team(opp.id)?.name || opp.name;
+        if (g.state === "pre") gl = `${home ? "vs" : "at"} ${esc(on)} · ${esc(fKick.format(g.date))}`;
+        else if (g.state === "in") gl = `<span style="color:var(--live)">${esc(mine.score)}-${esc(opp.score)} ${home ? "vs" : "at"} ${esc(on)} · ${esc(g.detail)}</span>`;
+        else { const w = +mine.score > +opp.score, tie = +mine.score === +opp.score; gl = `<span style="color:${w ? "var(--in)" : tie ? "inherit" : "var(--afc)"}">${w ? "W" : tie ? "T" : "L"} ${esc(mine.score)}-${esc(opp.score)}</span> ${home ? "vs" : "at"} ${esc(on)}`; }
+        gl += ` <a href="${esc(g.link)}" target="_blank" rel="noopener">Gamecast</a>`;
+      }
+      const tc = S.colors[t.id]?.color ? "#" + S.colors[t.id].color : "var(--ink-3)";
+      return `<div class="wcard" style="--tc:${esc(tc)}">
+        <div class="top">${t.logo ? `<img src="${esc(t.logo)}" alt="">` : "<span></span>"}<div class="nm">${esc(t.name)}<small>${rec(t)} · ${esc(t.div)}${t.streak ? " · " + esc(t.streak) : ""}</small></div><div class="st">${esc(big)}<small>${esc(small)}</small></div></div>
+        <p>${esc(line)}</p><div class="gl">${gl}</div></div>`;
+    }).join("") : `<p class="note">No other teams selected. Use “Change teams” to add some.</p>`;
+  }
+  function renderAll() { renderMine(); renderWatch(); renderConfs(); renderGames(); renderDivs(); }
+
+  /* ---------- loading ---------- */
+  async function loadSched() {
+    const id = S.my; if (!id) return;
+    try {
+      const d = await getJSON(`${API}/teams/${id}/schedule?seasontype=2`);
+      if (S.my !== id) return;
+      S.sched = { id, at: Date.now(), events: (d.events || []).map(norm).sort((a, b) => a.date - b.date) };
+    } catch (e) { S.sched = { id, error: true, at: Date.now() }; }
+    renderMine();
+  }
+  async function load() {
+    const req = (S.req = (S.req || 0) + 1);
+    $("refresh").textContent = "Refreshing…";
+    const wk = S.week ? `?week=${S.week.week}&seasontype=${S.week.type}` : "";
+    // Standings only move when games end: refresh them every 5 minutes during games, 15 otherwise.
+    const stTtl = S.events.some(g => g.state === "in") ? 5 * 60e3 : 15 * 60e3;
+    const needSt = !S.teams.length || !S.standAt || Date.now() - S.standAt > stTtl;
+    const [sb, st, tm] = await Promise.allSettled([
+      getJSON(`${API}/scoreboard${wk}`),
+      needSt ? getJSON(STAND) : Promise.resolve(null),
+      Object.keys(S.colors).length ? Promise.resolve(null) : getJSON(`${API}/teams`)
+    ]);
+    if (req !== S.req) return;
+    $("refresh").textContent = "Refresh";
+    const probs = [];
+    if (tm.status === "fulfilled" && tm.value) {
+      for (const x of tm.value.sports?.[0]?.leagues?.[0]?.teams || []) S.colors[String(x.team.id)] = { color: x.team.color, alt: x.team.alternateColor };
+    }
+    if (st.status === "fulfilled" && st.value) {
+      S.standAt = Date.now();
+      const teams = parseStandings(st.value);
+      if (teams.length >= 32) {
+        S.teams = teams; S.byId = Object.fromEntries(teams.map(t => [t.id, t]));
+        if (!S.myChosen && !S.my) S.my = teams.find(t => t.abbr === DEFAULT_MY)?.id || "";
+      }
+      const yr = st.value.children?.[0]?.standings?.season || st.value.season?.year;
+      if (yr) $("season").textContent = `${yr} season · seven teams per conference · only the #1 seed gets a bye`;
+      renderTeamSelect();
+    } else if (st.status === "rejected") probs.push("standings");
+    if (sb.status === "fulfilled") {
+      const d = sb.value;
+      S.events = (d.events || []).map(norm);
+      if (!S.week && d.week?.number) S.current = { type: String(d.season?.type ?? 2), week: String(d.week.number) };
+      const cal = d.leagues?.[0]?.calendar;
+      if (Array.isArray(cal) && cal.length && typeof cal[0] === "object") {
+        S.calendar = cal.filter(g => ["2", "3"].includes(String(g.value)) && g.entries?.length).map(g => ({ type: String(g.value), label: g.label, entries: g.entries.map(e => ({ value: e.value, label: e.label })) }));
+      }
+      S.lastOk = new Date();
+    } else probs.push("scores");
+    $("err").hidden = !probs.length;
+    $("err").textContent = probs.length === 2 ? "Couldn't reach ESPN's NFL feed. Check your connection; the page will try again on its own." : probs.length ? `The latest ${probs[0]} didn't load; showing what did. Trying again shortly.` : "";
+    renderWeeks();
+    renderAll();
+    if (S.my && (!S.sched || S.sched.id !== S.my || Date.now() - S.sched.at > 5 * 60e3)) loadSched();
+    const live = S.events.filter(g => g.state === "in").length;
+    $("dot").classList.toggle("on", live > 0);
+    const wkLbl = (() => { const w = S.week || S.current; if (!w) return ""; const gp = S.calendar.find(x => x.type === w.type); return gp?.entries.find(e => String(e.value) === String(w.week))?.label || `Week ${w.week}`; })();
+    $("livecount").textContent = `${wkLbl ? wkLbl + " · " : ""}${live} game${live === 1 ? "" : "s"} live`;
+    $("updated").textContent = S.lastOk ? "Updated " + fClock.format(S.lastOk) : "";
+    plan();
+  }
+  function plan() {
+    clearTimeout(S.timer);
+    const now = Date.now();
+    const live = S.events.some(g => g.state === "in");
+    const soon = S.events.some(g => g.state === "pre" && g.date - now < 45 * 60e3 && g.date - now > -4 * 3600e3);
+    const ms = live || soon ? 30e3 : 3 * 60e3;
+    S.nextAt = now + ms;
+    S.timer = setTimeout(() => { if (!document.hidden) load(); else S.nextAt = null; }, ms);
+  }
+  setInterval(() => { const s = S.nextAt ? Math.max(0, Math.round((S.nextAt - Date.now()) / 1000)) : null; $("next").textContent = s == null ? "" : `Next refresh in ${s >= 60 ? Math.round(s / 60) + " min" : s + "s"}`; }, 1000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && (!S.nextAt || Date.now() >= S.nextAt)) load(); });
+
+  /* ---------- controls ---------- */
+  $("refresh").addEventListener("click", () => { if (S.sched) S.sched.at = 0; S.standAt = 0; load(); });
+  $("team").addEventListener("change", e => { S.my = e.target.value; S.myChosen = true; S.sched = null; save(); renderAll(); loadSched(); });
+  $("wgrid").addEventListener("change", e => {
+    if (e.target.type !== "checkbox") return;
+    S.watch = [...$("wgrid").querySelectorAll("input:checked")].map(i => i.value);
+    save(); renderWatch(); renderConfs(); renderDivs(); renderGames();
+  });
+  document.addEventListener("click", e => { const d = $("wedit"); if (d.open && !d.contains(e.target)) d.open = false; });
+  function setWeek(v) {
+    const [type, week] = v.split(":");
+    S.week = S.current && S.current.type === type && String(S.current.week) === week ? null : { type, week };
+    S.events = []; renderWeeks(); renderGames(); renderMine(); load();
+  }
+  $("week").addEventListener("change", e => setWeek(e.target.value));
+  const step = d => { const sel = $("week"), i = sel.selectedIndex + d; if (i < 0 || i >= sel.options.length) return; sel.selectedIndex = i; setWeek(sel.value); };
+  $("prevwk").addEventListener("click", () => step(-1));
+  $("nextwk").addEventListener("click", () => step(1));
+
+  load();
+})();
+</script>
+</body>
+</html>

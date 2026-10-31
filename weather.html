@@ -1,0 +1,1011 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Easton Weather</title>
+<link rel="manifest" href="weather.webmanifest">
+<meta name="theme-color" content="#0B1016">
+<link rel="icon" type="image/png" href="icons/weather-192.png">
+<link rel="apple-touch-icon" href="icons/weather-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Weather">
+<link rel="stylesheet" href="assets/nav.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,200..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: slate header band, alerts, "now" panel beside today's forecast, 48-hour chart,
+   7-day range list, then sun / air / river instruments in a three-up row. */
+:root{
+  --bg:#EDF1F4; --surface:#FFFFFF; --surface-2:#F3F6F8; --ink:#13202B; --ink-2:#465867; --ink-3:#7B8B98; --line:#D6DEE5;
+  --band:#1E3242; --band-ink:#EEF4F8;
+  --warm:#D45A22; --warm-soft:#FBE6DB; --cool:#2E6DB4; --cool-soft:#DEEAF7; --rain:#3A7BD5; --river:#17707C; --river-soft:#DCEFF1;
+  --night:rgba(30,50,66,.06);
+  --sun:#F2B705; --sky-cloud:#BAC4CD; --sky-night:#2B3B49;
+  --ok:#2E8540; --watch:#C77700; --warn:#C0392B; --extreme:#8E1B5B;
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --body:"Archivo","Helvetica Neue",Arial,system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E151B; --surface:#151F27; --surface-2:#1B2731; --ink:#E5ECF1; --ink-2:#A3B2BE; --ink-3:#768795; --line:#26343F;
+    --band:#0A1219; --band-ink:#E5ECF1;
+    --warm:#FF8A50; --warm-soft:#3A2418; --cool:#79AEEA; --cool-soft:#172A3E; --rain:#6FA6EE; --river:#4FC1CF; --river-soft:#13303A;
+    --night:rgba(160,190,215,.06);
+    --sun:#F5C542; --sky-cloud:#3D4955; --sky-night:#081016;
+    --ok:#5CC274; --watch:#F0A531; --warn:#FF6B5B; --extreme:#E26AAE;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E151B; --surface:#151F27; --surface-2:#1B2731; --ink:#E5ECF1; --ink-2:#A3B2BE; --ink-3:#768795; --line:#26343F;
+  --band:#0A1219; --band-ink:#E5ECF1;
+  --warm:#FF8A50; --warm-soft:#3A2418; --cool:#79AEEA; --cool-soft:#172A3E; --rain:#6FA6EE; --river:#4FC1CF; --river-soft:#13303A;
+  --night:rgba(160,190,215,.06);
+  --sun:#F5C542; --sky-cloud:#3D4955; --sky-night:#081016;
+  --ok:#5CC274; --watch:#F0A531; --warn:#FF6B5B; --extreme:#E26AAE;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);font-variation-settings:"wdth" 100;-webkit-font-smoothing:antialiased;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+[hidden]{display:none!important}
+a{color:inherit}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--cool);outline-offset:2px;border-radius:4px}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.lbl{font:600 11.5px/1.2 var(--body);font-variation-settings:"wdth" 112;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+
+/* header */
+.band{background:var(--band);color:var(--band-ink)}
+.band .wrap{padding-block:18px 16px;display:flex;flex-wrap:wrap;gap:10px 24px;align-items:end;justify-content:space-between}
+.band h1{margin:0;font:800 clamp(30px,5vw,44px)/.95 var(--display);font-variation-settings:"wdth" 125;letter-spacing:-.01em;text-transform:uppercase}
+.band .where{margin-top:6px;font:500 13px/1.3 var(--mono);opacity:.75}
+.band .right{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font:500 13px/1.3 var(--mono)}
+.btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.25);color:var(--band-ink);border-radius:8px;padding:7px 12px;cursor:pointer;font:600 13px/1 var(--body);letter-spacing:.04em}
+.btn:hover{background:rgba(255,255,255,.16)}
+
+main.wrap{padding-block:20px 36px;display:flex;flex-direction:column;gap:20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-width:0}
+.card-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;padding:14px 16px 0}
+.card-h h2{margin:0;font:700 17px/1.2 var(--display);font-variation-settings:"wdth" 115;text-transform:uppercase;letter-spacing:.02em}
+.card-h .sub{font:500 12px/1.3 var(--mono);color:var(--ink-3)}
+.fail{padding:14px 16px;color:var(--ink-3);font-size:14px}
+
+/* alerts */
+.alerts{display:flex;flex-direction:column;gap:8px}
+.alert{--sev:var(--watch);border:1px solid var(--sev);border-left-width:6px;border-radius:10px;background:var(--surface)}
+.alert.Severe,.alert.Extreme{--sev:var(--warn)}
+.alert.Extreme{--sev:var(--extreme)}
+.alert.Minor{--sev:var(--watch)}
+.alert.Unknown{--sev:var(--cool)}
+.alert summary{list-style:none;cursor:pointer;padding:10px 14px;display:flex;gap:6px 14px;flex-wrap:wrap;align-items:baseline}
+.alert summary::-webkit-details-marker{display:none}
+.alert .ev{font:800 16px/1.2 var(--display);font-variation-settings:"wdth" 112;color:var(--sev);text-transform:uppercase;letter-spacing:.02em}
+.alert .when{font:500 13px/1.3 var(--mono);color:var(--ink-2)}
+.alert .more{margin-left:auto;font:600 12px/1 var(--body);color:var(--ink-3)}
+.alert[open] .more{visibility:hidden}
+.alert .body{padding:0 14px 12px;white-space:pre-line;font-size:14px;color:var(--ink-2);max-width:80ch}
+.alert .body b{color:var(--ink)}
+
+/* now + today */
+.top{display:grid;grid-template-columns:minmax(0,1fr);gap:20px}
+@media (min-width:900px){.top{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}}
+.now{padding:16px;display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+.now-main{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.now-main .glyph{width:84px;height:84px;color:var(--ink-2);flex:none}
+.temp{font:200 clamp(78px,13vw,112px)/.85 var(--display);font-variation-settings:"wdth" 75;letter-spacing:-.03em}
+.temp sup{font-size:.38em;font-weight:400;vertical-align:.95em;margin-left:2px;color:var(--ink-3)}
+.cond{font:700 20px/1.2 var(--display);font-variation-settings:"wdth" 110}
+.feels{color:var(--ink-2);font-size:14px}
+.hilo{font:500 14px/1.3 var(--mono);color:var(--ink-2);margin-top:4px}
+.hilo .h{color:var(--warm)} .hilo .l{color:var(--cool)}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.fact{background:var(--surface);padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.fact .v{font:500 17px/1.2 var(--mono);font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:6px}
+.fact .v small{font-size:12px;color:var(--ink-3)}
+.windarrow{width:16px;height:16px;color:var(--ink-2);flex:none}
+.obsnote{font:500 12px/1.3 var(--mono);color:var(--ink-3)}
+.today{padding:0 0 4px}
+.today .per{padding:12px 16px;border-top:1px solid var(--line);display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px}
+.today .per:first-of-type{border-top:0}
+.today .per .glyph{width:40px;height:40px;color:var(--ink-2)}
+.today .per h3{margin:0 0 2px;font:700 15px/1.2 var(--display);font-variation-settings:"wdth" 110;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.today .per h3 .t{font:600 15px/1 var(--mono)}
+.today .per h3 .t.h{color:var(--warm)} .today .per h3 .t.l{color:var(--cool)}
+.today .per p{margin:0;color:var(--ink-2);font-size:14.5px;max-width:65ch}
+.heads{margin:12px 16px 0;padding:9px 12px;border-radius:8px;background:var(--cool-soft);color:var(--ink);font-size:14px}
+.heads b{color:var(--cool)}
+
+/* hourly chart */
+.chartbox{position:relative;padding:8px 8px 12px}
+.chartbox svg{display:block;width:100%;height:auto;touch-action:pan-y}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);border-radius:8px;padding:8px 10px;font:500 12.5px/1.4 var(--mono);min-width:150px;transform:translate(-50%,0);white-space:nowrap;z-index:2}
+.tip b{font-family:var(--body);font-weight:700;font-size:13px;display:block;margin-bottom:2px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font:500 12px/1 var(--mono);color:var(--ink-3)}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+
+/* 7-day */
+.days{list-style:none;margin:8px 0 0;padding:0}
+.day{border-top:1px solid var(--line)}
+.day summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:92px 34px minmax(0,1fr) 44px minmax(150px,1.4fr);gap:10px;align-items:center;padding:10px 16px}
+.day summary::-webkit-details-marker{display:none}
+.day summary:hover{background:var(--surface-2)}
+.day .dn{font:700 15px/1.15 var(--display);font-variation-settings:"wdth" 108}
+.day .dn small{display:block;font:500 12px/1.2 var(--mono);color:var(--ink-3)}
+.day .glyph{width:32px;height:32px;color:var(--ink-2)}
+.day .sf{font-size:14px;color:var(--ink-2);min-width:0;display:flex;flex-direction:column;gap:3px}
+.day .sft{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sunl{display:flex;align-items:center;gap:7px;font:500 12px/1 var(--mono);color:var(--ink-3)}
+.sunbar{display:inline-block;width:54px;height:6px;border-radius:3px;background:var(--sky-cloud);overflow:hidden;flex:none}
+.sunbar i{display:block;height:100%;background:var(--sun)}
+.chip.sunny{background:color-mix(in srgb,var(--sun) 22%,transparent);color:var(--ink)}
+.day .sf .chip{margin-left:6px}
+.day .pp{font:500 13px/1 var(--mono);color:var(--rain);text-align:right}
+.day .lo,.day .hi{font:600 15px/1 var(--mono);text-align:right}
+.day .lo{color:var(--cool)} .day .hi{color:var(--warm);text-align:left}
+.temps{display:grid;grid-template-columns:38px minmax(0,1fr) 38px;gap:10px;align-items:center}
+.range{position:relative;height:6px;border-radius:3px;background:var(--surface-2)}
+.range span{position:absolute;top:0;bottom:0;border-radius:3px;background:linear-gradient(90deg,var(--cool),var(--warm))}
+.day .det{padding:0 16px 14px 152px;display:grid;gap:8px;color:var(--ink-2);font-size:14.5px}
+.day .det p{margin:0;max-width:70ch}
+.day .det b{color:var(--ink);font-weight:700}
+.chip{display:inline-block;border-radius:4px;padding:2px 6px;font:700 10.5px/1.3 var(--body);letter-spacing:.08em;text-transform:uppercase;background:var(--cool-soft);color:var(--cool);vertical-align:1px}
+.chip.hot{background:var(--warm-soft);color:var(--warm)}
+@media (max-width:640px){
+  .day summary{grid-template-columns:64px 28px minmax(0,1fr) 34px auto;gap:8px;padding:10px 12px}
+  .day .glyph{width:28px;height:28px}
+  .temps{display:flex;gap:0}
+  .day .range{display:none}
+  .day .sft{white-space:normal;font-size:13px;line-height:1.25}
+  .day .det{padding:0 12px 14px 12px}
+  .day .lo::after{content:"/";color:var(--ink-3);margin:0 3px}
+}
+
+/* instruments */
+.trio{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:20px}
+.inst{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px}
+.bigread{font:300 44px/1 var(--display);font-variation-settings:"wdth" 80;font-variant-numeric:tabular-nums}
+.bigread small{font:500 14px/1 var(--mono);color:var(--ink-3);margin-left:6px}
+.sunarc{width:100%;height:auto;display:block}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px}
+.kv dt{color:var(--ink-3)} .kv dd{margin:0;font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+.aqi-scale{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;height:8px;border-radius:4px;overflow:hidden;position:relative}
+.aqi-scale i:nth-child(1){background:#4CAF50}.aqi-scale i:nth-child(2){background:#F2C94C}.aqi-scale i:nth-child(3){background:#F2994A}
+.aqi-scale i:nth-child(4){background:#EB5757}.aqi-scale i:nth-child(5){background:#9B51E0}.aqi-scale i:nth-child(6){background:#7E2233}
+.aqi-mark{position:relative;height:10px}
+.aqi-mark span{position:absolute;top:0;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:8px solid var(--ink);transform:translateX(-6px)}
+.gauge{position:relative;height:26px;border-radius:6px;background:var(--surface-2);overflow:hidden;border:1px solid var(--line)}
+.gauge .fill{position:absolute;left:0;top:0;bottom:0;background:var(--river);opacity:.85;transition:width .6s ease}
+.gauge .th{position:absolute;top:0;bottom:0;width:2px}
+.gticks{position:relative;height:16px;font:500 11px/1 var(--mono);color:var(--ink-3)}
+.gticks span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.trend{font:500 13px/1.3 var(--mono);color:var(--ink-2)}
+.spark{width:100%;height:auto;display:block}
+
+/* history */
+.hist summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px}
+.hist summary::-webkit-details-marker{display:none}
+.hist summary h2{margin:0;font:700 17px/1.2 var(--display);font-variation-settings:"wdth" 115;text-transform:uppercase;letter-spacing:.02em}
+.hist summary .sub{display:block;font:500 12px/1.3 var(--mono);color:var(--ink-3);margin-top:3px}
+.hist .tg{font:600 13px/1 var(--body);color:var(--cool);border:1px solid var(--line);border-radius:999px;padding:7px 12px;white-space:nowrap}
+.hist .tg .h{display:none}
+.hist[open] .tg .s{display:none}.hist[open] .tg .h{display:inline}
+.hist[open] summary{border-bottom:1px solid var(--line)}
+.hsum{display:flex;flex-wrap:wrap;gap:8px 22px;padding:14px 16px 4px;font-size:14.5px;color:var(--ink-2)}
+.hsum b{font:600 15px/1 var(--mono);color:var(--ink)}
+.hdays-wrap{overflow-x:auto;padding:8px 16px 4px}
+.hdays{display:grid;grid-template-columns:repeat(var(--n),minmax(64px,1fr));gap:6px;min-width:calc(var(--n) * 64px)}
+.hday{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 2px;border-radius:8px;text-align:center}
+.hday.today{background:var(--surface-2)}
+.hday .dn{font:700 13px/1.1 var(--display);font-variation-settings:"wdth" 108}
+.hday .dn small{display:block;font:500 11px/1.2 var(--mono);color:var(--ink-3)}
+.hday .glyph{width:30px;height:30px;color:var(--ink-2)}
+.tcol{position:relative;width:30px;height:150px}
+.tcol .nb{position:absolute;left:0;right:0;background:repeating-linear-gradient(45deg,var(--line) 0 2px,transparent 2px 5px);border-radius:3px}
+.tcol .tb{position:absolute;left:8px;right:8px;border-radius:7px;background:linear-gradient(0deg,var(--cool),var(--warm))}
+.tcol .hv,.tcol .lv{position:absolute;left:50%;transform:translateX(-50%);font:600 12px/1 var(--mono);white-space:nowrap}
+.tcol .hv{color:var(--warm)} .tcol .lv{color:var(--cool)}
+.dep{font:600 11.5px/1 var(--mono)} .dep.up{color:var(--warm)} .dep.dn{color:var(--cool)} .dep.eq{color:var(--ink-3)}
+.hval{font:500 12px/1.2 var(--mono);color:var(--ink-2);display:flex;flex-direction:column;align-items:center;gap:3px}
+.pbar{width:30px;height:28px;display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid var(--line)}
+.pbar i{display:block;width:16px;background:var(--rain);border-radius:2px 2px 0 0}
+.prelim{color:var(--ink-3);font-size:11px}
+.hnote{padding:4px 16px 14px;font:500 12px/1.4 var(--mono);color:var(--ink-3)}
+@media (max-width:520px){.facts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px;display:flex;flex-direction:column;gap:6px}
+footer.small a{color:var(--ink-2)}
+.skel{height:120px;margin:16px;border-radius:8px;background:linear-gradient(90deg,var(--surface-2) 0%,var(--surface) 50%,var(--surface-2) 100%);background-size:200% 100%;animation:sh 1.4s infinite}
+@keyframes sh{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<nav class="sitenav" aria-label="Dashboards"><div class="sitenav-in"><a href="./"><img src="icons/home-64.png" alt="">Home</a><a href="weather.html" aria-current="page"><img src="icons/weather-64.png" alt="">Weather</a><a href="college.html"><img src="icons/college-64.png" alt="">College</a><a href="nfl.html"><img src="icons/nfl-64.png" alt="">NFL</a></div></nav>
+
+<div class="band">
+  <div class="wrap">
+    <div>
+      <h1>Easton Weather</h1>
+      <div class="where">Easton, PA · Forks of the Delaware · 40.69°N 75.21°W</div>
+    </div>
+    <div class="right">
+      <span id="updated">Loading…</span>
+      <button id="refresh" class="btn" type="button">Refresh</button>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <div id="alerts" class="alerts" aria-live="polite"></div>
+
+  <div class="top">
+    <section class="card" aria-labelledby="now-h">
+      <div class="card-h"><h2 id="now-h">Right now</h2><span class="sub" id="obs-station"></span></div>
+      <div id="now" class="now"><div class="skel"></div></div>
+    </section>
+    <section class="card today" aria-labelledby="today-h">
+      <div class="card-h"><h2 id="today-h">Forecast</h2><span class="sub" id="fc-issued"></span></div>
+      <div id="heads"></div>
+      <div id="today"><div class="skel"></div></div>
+    </section>
+  </div>
+
+  <details class="card hist" id="hist">
+    <summary><span><h2>Last 7 days</h2><span class="sub" id="hist-teaser">What just happened · official Allentown records</span></span><span class="tg"><span class="s">Show</span><span class="h">Hide</span></span></summary>
+    <div id="histbody"><div class="skel"></div></div>
+  </details>
+
+  <section class="card" aria-labelledby="hr-h">
+    <div class="card-h"><h2 id="hr-h">Next 48 hours</h2>
+      <div class="legend"><span><i style="background:var(--warm)"></i>Temperature °F</span><span><i style="background:var(--rain);height:8px;width:8px"></i>Chance of rain or snow</span><span><i style="background:linear-gradient(90deg,var(--sun),var(--sky-cloud));height:8px;width:22px"></i>Sky: sunny → overcast</span><span><i style="background:var(--night);height:10px;border:1px solid var(--line)"></i>Night</span></div>
+    </div>
+    <div class="chartbox" id="chartbox"><div class="skel"></div></div>
+  </section>
+
+  <section class="card" aria-labelledby="wk-h">
+    <div class="card-h"><h2 id="wk-h">7-day forecast</h2><span class="sub">Tap a day for the full forecast</span></div>
+    <ul class="days" id="days"><li><div class="skel"></div></li></ul>
+  </section>
+
+  <div class="trio">
+    <section class="card" aria-labelledby="sun-h">
+      <div class="card-h"><h2 id="sun-h">Sun</h2><span class="sub" id="sun-sub"></span></div>
+      <div class="inst" id="sun"><div class="skel"></div></div>
+    </section>
+    <section class="card" aria-labelledby="air-h">
+      <div class="card-h"><h2 id="air-h">Air quality</h2><span class="sub">US AQI</span></div>
+      <div class="inst" id="air"><div class="skel"></div></div>
+    </section>
+    <section class="card" aria-labelledby="riv-h">
+      <div class="card-h"><h2 id="riv-h">Delaware River</h2><span class="sub">at Easton · flood stage 22 ft</span></div>
+      <div class="inst" id="river"><div class="skel"></div></div>
+    </section>
+  </div>
+</main>
+
+<footer class="wrap small">
+  <span>Forecasts, alerts and observations from the National Weather Service (Mount Holly, NJ office). River levels from the NWS gauge on the Delaware at Easton–Phillipsburg. Sunrise, sunset, UV, cloud cover, sunshine hours and air quality from Open-Meteo; sunshine hours are weather-model estimates of time in direct sun. The last 7 days use NOAA's official daily records for Allentown (ABE) with 1991–2020 normals, plus hourly readings from the same station. Updates every 5 minutes; times are Eastern.</span>
+  <span><a href="https://forecast.weather.gov/MapClick.php?lat=40.691&amp;lon=-75.21" target="_blank" rel="noopener">NWS forecast page</a> · <a href="https://forecast.weather.gov/product.php?site=PHI&amp;issuedby=PHI&amp;product=AFD" target="_blank" rel="noopener">Forecaster discussion</a> · <a href="https://radar.weather.gov/station/kdix/standard" target="_blank" rel="noopener">Radar (KDIX)</a> · <a href="https://water.noaa.gov/gauges/estn4" target="_blank" rel="noopener">River gauge</a></span>
+</footer>
+
+<script>
+(() => {
+  "use strict";
+  const LAT = 40.6910, LON = -75.2100;   // Centre Square, Easton
+  const TZ = "America/New_York";
+  const GAUGE = "ESTN4";                  // Delaware River at Easton (NWS)
+  const NWS = "https://api.weather.gov";
+  const S = { points: null, refreshTimer: null };
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const f = (o) => new Intl.DateTimeFormat("en-US", Object.assign({ timeZone: TZ }, o));
+  const fTime = f({ hour: "numeric", minute: "2-digit" });
+  const fHour = f({ hour: "numeric" });
+  const fDay = f({ weekday: "short" });
+  const fDayLong = f({ weekday: "long" });
+  const fDate = f({ month: "short", day: "numeric" });
+  const fKey = f({ year: "numeric", month: "2-digit", day: "2-digit" });
+  const fClock = f({ hour: "numeric", minute: "2-digit", second: "2-digit" });
+
+  async function getJSON(url, ms = 15000) {
+    const c = new AbortController(); const t = setTimeout(() => c.abort(), ms);
+    try {
+      const r = await fetch(url, { signal: c.signal, headers: { Accept: url.includes("weather.gov") ? "application/geo+json" : "application/json" } });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return await r.json();
+    } finally { clearTimeout(t); }
+  }
+
+  /* ---------- units ---------- */
+  const val = q => (q && q.value != null ? q.value : null);
+  const cToF = c => c == null ? null : c * 9 / 5 + 32;
+  const kmhToMph = k => k == null ? null : k / 1.609344;
+  const paToInHg = p => p == null ? null : p / 3386.389;
+  const mToMi = m => m == null ? null : m / 1609.344;
+  const round = (n, d = 0) => n == null || isNaN(n) ? "–" : (+n).toFixed(d);
+  const compass = deg => deg == null ? "" : ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"][Math.round(deg / 22.5) % 16];
+  const DIRDEG = { N:0,NNE:22.5,NE:45,ENE:67.5,E:90,ESE:112.5,SE:135,SSE:157.5,S:180,SSW:202.5,SW:225,WSW:247.5,W:270,WNW:292.5,NW:315,NNW:337.5 };
+  function dewF(q) { if (!q || q.value == null) return null; return /degF/.test(q.unitCode || "") ? q.value : cToF(q.value); }
+
+  /* ---------- glyphs (drawn, no icon font) ---------- */
+  function kind(text, isDay) {
+    const t = (text || "").toLowerCase();
+    if (/thunder|t-storm/.test(t)) return "storm";
+    if (/snow|flurr|sleet|wintry|ice pellets|freezing/.test(t)) return "snow";
+    if (/rain|shower|drizzle/.test(t)) return /chance|slight|isolated|scattered/.test(t) ? "showers" : "rain";
+    if (/fog|haze|smoke|mist/.test(t)) return "fog";
+    if (/partly|mostly sunny|mostly clear|few clouds|partly sunny/.test(t)) return isDay ? "partly" : "partlyN";
+    if (/mostly cloudy|cloudy|overcast/.test(t)) return "cloud";
+    if (/wind|breezy|blustery/.test(t)) return "wind";
+    return isDay ? "sun" : "moon";
+  }
+  const SUN = '<circle cx="24" cy="24" r="8" fill="var(--warm)" stroke="none"/><g stroke="var(--warm)" stroke-width="2.5" stroke-linecap="round"><path d="M24 6v5M24 37v5M6 24h5M37 24h5M11.3 11.3l3.5 3.5M33.2 33.2l3.5 3.5M11.3 36.7l3.5-3.5M33.2 14.8l3.5-3.5"/></g>';
+  const MOON = '<path d="M30 8a15 15 0 1 0 10 26A13 13 0 0 1 30 8z" fill="var(--cool)" stroke="none"/>';
+  const CLOUD = (x = 0, y = 0, fill = "var(--surface)") => `<path transform="translate(${x} ${y})" d="M14 38h22a8 8 0 0 0 0-16 11 11 0 0 0-21-2 8 8 0 0 0-1 18z" fill="${fill}" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>`;
+  function glyph(text, isDay = true) {
+    const k = kind(text, isDay);
+    const drops = n => Array.from({ length: n }, (_, i) => `<path d="M${16 + i * 8} 42l-2 5" stroke="var(--rain)" stroke-width="2.5" stroke-linecap="round"/>`).join("");
+    const inner = {
+      sun: SUN, moon: MOON,
+      partly: `<g transform="translate(-6 -6) scale(.8)">${SUN}</g>${CLOUD(2, 2)}`,
+      partlyN: `<g transform="translate(-4 -4) scale(.75)">${MOON}</g>${CLOUD(2, 2)}`,
+      cloud: `${CLOUD(-4, -6, "var(--surface-2)")}${CLOUD(2, 0)}`,
+      rain: `${CLOUD(0, -6)}${drops(3)}`,
+      showers: `<g transform="translate(-6 -8) scale(.7)">${isDay ? SUN : MOON}</g>${CLOUD(0, -6)}${drops(2)}`,
+      snow: `${CLOUD(0, -6)}<g fill="var(--cool)"><circle cx="17" cy="43" r="2.2"/><circle cx="25" cy="46" r="2.2"/><circle cx="33" cy="43" r="2.2"/></g>`,
+      storm: `${CLOUD(0, -6)}<path d="M25 34l-5 8h6l-4 8" fill="none" stroke="var(--watch)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>`,
+      fog: `${CLOUD(0, -8)}<g stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10 38h28M14 44h24"/></g>`,
+      wind: `<g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 18h24a5 5 0 1 0-5-5M6 26h32a5 5 0 1 1-5 5M6 34h16"/></g>`
+    }[k];
+    return `<svg class="glyph" viewBox="0 0 48 52" role="img" aria-label="${esc(text)}">${inner}</svg>`;
+  }
+  const windArrow = deg => deg == null ? "" :
+    `<svg class="windarrow" viewBox="0 0 16 16" aria-hidden="true" style="transform:rotate(${deg + 180}deg)"><path d="M8 1l4 9H9v5H7v-5H4z" fill="currentColor"/></svg>`;
+
+  /* ---------- NWS: points → forecast, hourly, stations ---------- */
+  async function points() {
+    if (S.points) return S.points;
+    const d = await getJSON(`${NWS}/points/${LAT},${LON}`);
+    S.points = d.properties;
+    return S.points;
+  }
+
+  // Station reports are preferred; if the Weather Service feed is delayed (it sometimes stalls for hours),
+  // fall back to Open-Meteo's model estimate for Easton and say so.
+  const FRESH_MS = 2 * 3600e3;
+  async function stationObs() {
+    const p = await points();
+    const st = await getJSON(p.observationStations);
+    const stations = (st.features || []).slice(0, 4).map(x => x.properties);
+    let newest = null;
+    for (const s of stations) {
+      try {
+        const o = (await getJSON(`${NWS}/stations/${s.stationIdentifier}/observations/latest`)).properties;
+        if (val(o.temperature) == null) continue;
+        const age = Date.now() - new Date(o.timestamp).getTime();
+        if (age < FRESH_MS) return { obs: o, station: s };
+        if (!newest || new Date(o.timestamp) > new Date(newest.obs.timestamp)) newest = { obs: o, station: s, stale: true };
+      } catch (e) {}
+    }
+    return newest;
+  }
+  async function modelObs() {
+    const d = await getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,apparent_temperature,relative_humidity_2m,dew_point_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,weather_code,visibility&timezone=${encodeURIComponent(TZ)}&timeformat=unixtime`);
+    const c = d.current || {};
+    if (c.temperature_2m == null) throw new Error("no model data");
+    const q = v => ({ value: v ?? null });
+    // Shaped like a Weather Service observation (metric), so the same panel can draw it.
+    return {
+      timestamp: new Date((c.time || Date.now() / 1000) * 1000).toISOString(),
+      textDescription: WMO(c.weather_code), temperature: q(c.temperature_2m), dewpoint: q(c.dew_point_2m),
+      relativeHumidity: q(c.relative_humidity_2m), windDirection: q(c.wind_direction_10m), windSpeed: q(c.wind_speed_10m),
+      windGust: q(c.wind_gusts_10m), barometricPressure: q(c.pressure_msl != null ? c.pressure_msl * 100 : null),
+      visibility: q(c.visibility), windChill: q(c.apparent_temperature), heatIndex: q(null)
+    };
+  }
+  async function loadNow() {
+    let st = null, model = null;
+    try { st = await stationObs(); } catch (e) {}
+    if (!st || st.stale) { try { model = await modelObs(); } catch (e) {} }
+    if (st && !st.stale) { S.obs = st.obs; S.station = st.station; S.obsSource = "station"; S.staleStation = null; }
+    else if (model) { S.obs = model; S.station = null; S.obsSource = "model"; S.staleStation = st; }
+    else if (st) { S.obs = st.obs; S.station = st.station; S.obsSource = "stale"; S.staleStation = null; }
+    else { S.obs = null; }
+    if (!S.obs) {
+      $("obs-station").textContent = "";
+      $("now").innerHTML = `<div class="fail">Current conditions aren't available right now: the Weather Service's station reports and the backup model feed both failed to load. Trying again in a few minutes.</div>`;
+      return;
+    }
+    try { renderNow(); }
+    catch (e) {
+      console.error("Right now panel:", e);
+      $("now").innerHTML = `<div class="fail">The current conditions loaded but the panel couldn't draw them (${esc(e.message)}). Refresh to try again.</div>`;
+    }
+  }
+
+  function renderNow() {
+    const o = S.obs; if (!o) return;
+    const t = cToF(val(o.temperature));
+    const feelsC = val(o.windChill) ?? val(o.heatIndex);
+    const feels = feelsC != null ? cToF(feelsC) : null;
+    const wdeg = val(o.windDirection), wspd = kmhToMph(val(o.windSpeed)), gust = kmhToMph(val(o.windGust));
+    const pres = paToInHg(val(o.barometricPressure) ?? val(o.seaLevelPressure));
+    const vis = mToMi(val(o.visibility));
+    const rh = val(o.relativeHumidity), dp = cToF(val(o.dewpoint));
+    const today = todayHiLo();
+    const uv = S.uvNow;
+    const ago = ms => { const m = Math.round((Date.now() - ms) / 60000); return m < 90 ? `${m} min ago` : `${Math.round(m / 60)} hours ago`; };
+    let srcNote;
+    if (S.obsSource === "model") {
+      $("obs-station").textContent = "Model estimate · Open-Meteo";
+      const last = S.staleStation;
+      srcNote = `Estimated for Easton at ${fTime.format(new Date(o.timestamp))} by the Open-Meteo weather model. The Weather Service's station reports are delayed${last ? ` (latest ${esc(last.station.stationIdentifier)} reading: ${fTime.format(new Date(last.obs.timestamp))}, ${ago(new Date(last.obs.timestamp).getTime())})` : ""}; the page switches back automatically when they resume.`;
+    } else {
+      $("obs-station").textContent = `${S.station.stationIdentifier} · ${S.station.name}`.slice(0, 64);
+      srcNote = S.obsSource === "stale"
+        ? `<span style="color:var(--warn)">Old reading: observed ${fTime.format(new Date(o.timestamp))} (${ago(new Date(o.timestamp).getTime())}). Newer reports haven't come through yet.</span>`
+        : `Observed ${fTime.format(new Date(o.timestamp))}`;
+    }
+    $("now").innerHTML = `
+      <div class="now-main">
+        ${glyph(o.textDescription || "Clear", isDaylight())}
+        <div><div class="temp">${round(t)}<sup>°F</sup></div></div>
+        <div>
+          <div class="cond">${esc(o.textDescription || "—")}</div>
+          <div class="feels">${feels != null && Math.abs(feels - t) >= 2 ? `Feels like ${round(feels)}°` : "Feels like the thermometer says"}</div>
+          ${today ? `<div class="hilo">${today.hi != null ? `<span class="h">H ${today.hi}°</span>` : ""}${today.hi != null && today.lo != null ? " · " : ""}${today.lo != null ? `<span class="l">L ${today.lo}°</span>` : ""}</div>` : ""}
+        </div>
+      </div>
+      <div class="facts">
+        <div class="fact"><span class="lbl">Wind</span><span class="v">${windArrow(wdeg)}${wspd != null && wspd < 1 ? "Calm" : `${compass(wdeg)} ${round(wspd)}<small>mph</small>`}</span>${gust ? `<span class="obsnote">Gusts ${round(gust)} mph</span>` : ""}</div>
+        <div class="fact"><span class="lbl">Humidity</span><span class="v">${round(rh)}<small>%</small></span></div>
+        <div class="fact"><span class="lbl">Dew point</span><span class="v">${round(dp)}<small>°F</small></span></div>
+        <div class="fact"><span class="lbl">Pressure</span><span class="v">${round(pres, 2)}<small>inHg</small></span></div>
+        <div class="fact"><span class="lbl">Visibility</span><span class="v">${vis != null ? (vis >= 10 ? "10+" : round(vis, vis < 1 ? 2 : 1)) : "–"}<small>mi</small></span></div>
+        <div class="fact"><span class="lbl">UV index</span><span class="v">${uv != null ? round(uv) : "–"}<small>${uv != null ? uvWord(uv) : ""}</small></span></div>
+      </div>
+      <div class="obsnote">${srcNote}</div>`;
+  }
+  const uvWord = u => u < 3 ? "Low" : u < 6 ? "Moderate" : u < 8 ? "High" : u < 11 ? "Very high" : "Extreme";
+  function isDaylight() {
+    const td = S.om?.[fKey.format(new Date())];
+    if (td) { const n = Date.now(); return n > td.rise && n < td.set; }
+    const h = +f({ hour: "numeric", hour12: false }).format(new Date()); return h >= 7 && h < 18;
+  }
+  function todayHiLo() {
+    const ps = S.periods; if (!ps?.length) return null;
+    const first = ps[0], second = ps[1];
+    if (first.isDaytime) return { hi: first.temperature, lo: second && !second.isDaytime ? second.temperature : null };
+    return { hi: null, lo: first.temperature };
+  }
+
+  async function loadForecast() {
+    try {
+      const p = await points();
+      const d = await getJSON(p.forecast);
+      S.periods = d.properties.periods || [];
+      $("fc-issued").textContent = d.properties.updateTime || d.properties.generatedAt ? "Issued " + fTime.format(new Date(d.properties.updateTime || d.properties.generatedAt)) : "";
+      renderToday(); renderDays(); renderNow();
+    } catch (e) {
+      $("today").innerHTML = `<div class="fail">The forecast didn't load. The National Weather Service feed may be busy; trying again in a few minutes.</div>`;
+      $("days").innerHTML = `<li class="fail">The 7-day forecast didn't load.</li>`;
+    }
+  }
+  function renderToday() {
+    const ps = (S.periods || []).slice(0, 3);
+    $("today").innerHTML = ps.map(p => `<div class="per">${glyph(p.shortForecast, p.isDaytime)}<div>
+        <h3>${esc(p.name)} <span class="t ${p.isDaytime ? "h" : "l"}">${p.isDaytime ? "High" : "Low"} ${p.temperature}°</span></h3>
+        <p>${esc(p.detailedForecast)}</p></div></div>`).join("");
+    // Frost and freeze heads-up for the next three nights.
+    const nights = (S.periods || []).filter(p => !p.isDaytime).slice(0, 3);
+    const cold = nights.find(p => p.temperature <= 32) || nights.find(p => p.temperature <= 36);
+    $("heads").innerHTML = cold ? `<div class="heads"><b>${cold.temperature <= 32 ? "Freeze" : "Frost possible"}:</b> ${esc(cold.name)} drops to ${cold.temperature}°F. Bring in tender plants, disconnect garden hoses and check water for animals.</div>` : "";
+  }
+
+  function renderDays() {
+    const ps = S.periods || [];
+    const byDate = new Map();
+    for (const p of ps) {
+      const k = fKey.format(new Date(p.startTime));
+      if (!byDate.has(k)) byDate.set(k, { key: k, start: new Date(p.startTime) });
+      const d = byDate.get(k);
+      if (p.isDaytime) d.day = p; else d.night = p;
+    }
+    const days = [...byDate.values()].slice(0, 7);
+    const temps = days.flatMap(d => [d.day?.temperature, d.night?.temperature]).filter(v => v != null);
+    const mn = Math.min(...temps), mx = Math.max(...temps), span = Math.max(1, mx - mn);
+    const todayKey = fKey.format(new Date());
+    const sunVals = days.filter(d => d.day && S.om?.[d.key]?.sun != null).map(d => [d.key, S.om[d.key].sun]);
+    const best = sunVals.reduce((m, x) => !m || x[1] > m[1] ? x : m, null);
+    const sunniest = best && best[1] >= 3 * 3600 && sunVals.filter(x => x[1] >= best[1] - 1800).length === 1 ? best[0] : null;
+    $("days").innerHTML = days.map((d, i) => {
+      const main = d.day || d.night;
+      const name = d.key === todayKey ? (d.day ? "Today" : "Tonight") : fDay.format(d.start);
+      const pop = Math.max(val(d.day?.probabilityOfPrecipitation) || 0, val(d.night?.probabilityOfPrecipitation) || 0);
+      const hi = d.day?.temperature, lo = d.night?.temperature;
+      const a = lo != null ? lo : hi, b = hi != null ? hi : lo;
+      const left = ((a - mn) / span) * 100, width = Math.max(3, ((b - a) / span) * 100);
+      const chip = lo != null && lo <= 32 ? '<span class="chip">Freeze</span>' : lo != null && lo <= 36 ? '<span class="chip">Frost</span>' : hi != null && hi >= 90 ? '<span class="chip hot">Heat</span>' : "";
+      return `<li class="day"><details${i === 0 ? "" : ""}>
+        <summary>
+          <span class="dn">${name}<small>${fDate.format(d.start)}</small></span>
+          ${glyph(main.shortForecast, !!d.day)}
+          <span class="sf"><span class="sft">${esc(main.shortForecast)}${chip}${d.key === sunniest ? '<span class="chip sunny">Sunniest</span>' : ""}</span>${d.day ? sunLine(d.key) : ""}</span>
+          <span class="pp">${pop ? pop + "%" : ""}</span>
+          <span class="temps"><span class="lo">${lo != null ? lo + "°" : "–"}</span><span class="range" aria-hidden="true"><span style="left:${Math.min(left, 97)}%;width:${Math.max(3, Math.min(width, 100 - left))}%"></span></span><span class="hi">${hi != null ? hi + "°" : "–"}</span></span>
+        </summary>
+        <div class="det">
+          ${d.day ? `<p><b>${esc(d.day.name)}:</b> ${esc(d.day.detailedForecast)}</p>` : ""}
+          ${d.night ? `<p><b>${esc(d.night.name)}:</b> ${esc(d.night.detailedForecast)}</p>` : ""}
+        </div></details></li>`;
+    }).join("");
+  }
+
+  function sunLine(key) {
+    const o = S.om?.[key];
+    if (!o || o.sun == null || !o.len) return "";
+    const pct = Math.max(0, Math.min(100, o.sun / o.len * 100));
+    return `<span class="sunl" title="Expected hours of direct sunshine out of ${hrs1(o.len)} h of daylight"><span class="sunbar"><i style="width:${pct.toFixed(0)}%"></i></span>${hrs1(o.sun)} of ${hrs1(o.len)} h sun</span>`;
+  }
+  const hrs1 = s => s == null ? "–" : (s / 3600).toFixed(1).replace(/\.0$/, "");
+
+  /* ---------- hourly chart ---------- */
+  async function loadHourly() {
+    try {
+      const p = await points();
+      const d = await getJSON(p.forecastHourly);
+      const now = Date.now();
+      S.hours = (d.properties.periods || []).filter(h => new Date(h.endTime).getTime() > now).slice(0, 48).map(h => ({
+        t: new Date(h.startTime), temp: h.temperature, pop: val(h.probabilityOfPrecipitation) || 0,
+        day: h.isDaytime, sf: h.shortForecast, wind: `${h.windDirection || ""} ${h.windSpeed || ""}`.trim(),
+        rh: val(h.relativeHumidity), dp: dewF(h.dewpoint)
+      }));
+      drawChart();
+    } catch (e) {
+      $("chartbox").innerHTML = `<div class="fail">The hourly forecast didn't load. Trying again in a few minutes.</div>`;
+    }
+  }
+  function drawChart() {
+    const hrs = S.hours; const box = $("chartbox");
+    if (!hrs?.length) return;
+    const W = Math.max(320, box.clientWidth - 16), narrow = W < 620;
+    const H = narrow ? 268 : 288, padL = 34, padR = 12, top = 22, tempH = H - 136, skyY = top + tempH + 22, skyH = 12, popTop = top + tempH + 48, popH = 46;
+    const n = hrs.length, step = (W - padL - padR) / n;
+    const x = i => padL + step * i + step / 2;
+    const temps = hrs.map(h => h.temp);
+    let lo = Math.floor((Math.min(...temps) - 2) / 5) * 5, hi = Math.ceil((Math.max(...temps) + 2) / 5) * 5;
+    if (hi - lo < 10) hi = lo + 10;
+    const y = v => top + tempH - ((v - lo) / (hi - lo)) * tempH;
+    let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Hourly temperature and precipitation chance for the next 48 hours">`;
+    // night shading
+    let runStart = null;
+    hrs.forEach((h, i) => {
+      if (!h.day && runStart == null) runStart = i;
+      if ((h.day || i === n - 1) && runStart != null) { const end = h.day ? i : i + 1; s += `<rect x="${padL + step * runStart}" y="${top - 8}" width="${step * (end - runStart)}" height="${popTop + popH - top + 8}" fill="var(--night)"/>`; runStart = null; }
+    });
+    // grid lines + y labels
+    for (let v = lo; v <= hi; v += 5) {
+      if ((v - lo) % (hi - lo > 30 ? 10 : 5)) continue;
+      s += `<line x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/>`;
+      s += `<text x="${padL - 6}" y="${y(v) + 4}" text-anchor="end" font-family="var(--mono)" font-size="11" fill="var(--ink-3)">${v}°</text>`;
+    }
+    // midnight separators & day labels
+    hrs.forEach((h, i) => {
+      const hr = +f({ hour: "numeric", hour12: false }).format(h.t) % 24;
+      if (hr === 0 && i > 0) {
+        s += `<line x1="${padL + step * i}" x2="${padL + step * i}" y1="${top - 10}" y2="${popTop + popH}" stroke="var(--ink-3)" stroke-dasharray="2 3" stroke-width="1"/>`;
+        s += `<text x="${padL + step * i + 4}" y="${top - 10}" font-family="var(--body)" font-weight="700" font-size="11" fill="var(--ink-2)" letter-spacing=".08em">${fDay.format(h.t).toUpperCase()}</text>`;
+      }
+    });
+    // temperature area + line
+    const pts = hrs.map((h, i) => [x(i), y(h.temp)]);
+    const line = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join("");
+    s += `<path d="${line}L${pts[n - 1][0]} ${top + tempH}L${pts[0][0]} ${top + tempH}Z" fill="var(--warm)" opacity=".12"/>`;
+    s += `<path d="${line}" fill="none" stroke="var(--warm)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    // labels at local extremes + every 6h (12h when narrow)
+    const every = narrow ? 6 : 3;
+    let lastLbl = -99;
+    hrs.forEach((h, i) => {
+      const hr = +f({ hour: "numeric", hour12: false }).format(h.t) % 24;
+      const ext = i > 0 && i < n - 1 && ((h.temp >= hrs[i - 1].temp && h.temp > hrs[i + 1].temp) || (h.temp <= hrs[i - 1].temp && h.temp < hrs[i + 1].temp));
+      if (hr % every === 0 || i === 0) s += `<text x="${x(i)}" y="${popTop + popH + 16}" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--ink-3)">${i === 0 ? "Now" : fHour.format(h.t).replace(" ", "").toLowerCase()}</text>`;
+      if ((ext && i - lastLbl >= (narrow ? 5 : 3)) || i === 0) {
+        lastLbl = i;
+        s += `<circle cx="${x(i)}" cy="${y(h.temp)}" r="3.2" fill="var(--surface)" stroke="var(--warm)" stroke-width="2"/>`;
+        s += `<text x="${x(i)}" y="${y(h.temp) - 8}" text-anchor="middle" font-family="var(--mono)" font-weight="600" font-size="12" fill="var(--ink)">${h.temp}°</text>`;
+      }
+    });
+    // precip bars
+    s += `<text x="${padL - 6}" y="${popTop + 10}" text-anchor="end" font-family="var(--mono)" font-size="10" fill="var(--ink-3)">100%</text>`;
+    s += `<line x1="${padL}" x2="${W - padR}" y1="${popTop + popH}" y2="${popTop + popH}" stroke="var(--line)"/>`;
+    hrs.forEach((h, i) => {
+      if (!h.pop) return;
+      const bh = (h.pop / 100) * popH;
+      s += `<rect x="${padL + step * i + 1}" y="${popTop + popH - bh}" width="${Math.max(1, step - 2)}" height="${bh}" rx="1.5" fill="var(--rain)" opacity="${.35 + h.pop / 160}"/>`;
+    });
+    // sky strip: sun color fades to overcast grey with cloud cover; dark at night
+    const cloudAt = t => S.cloud?.get(Math.floor(t.getTime() / 3600e3) * 3600e3);
+    if (S.cloud) {
+      s += `<text x="${padL - 6}" y="${skyY + 10}" text-anchor="end" font-family="var(--mono)" font-size="10" fill="var(--ink-3)">Sky</text>`;
+      hrs.forEach((h, i) => {
+        const c = cloudAt(h.t); if (c == null) return;
+        const x0 = (padL + step * i).toFixed(1), w = (step + .6).toFixed(1);
+        if (!h.day) s += `<rect x="${x0}" y="${skyY}" width="${w}" height="${skyH}" fill="var(--sky-night)"/>`;
+        else s += `<rect x="${x0}" y="${skyY}" width="${w}" height="${skyH}" fill="var(--sky-cloud)"/><rect x="${x0}" y="${skyY}" width="${w}" height="${skyH}" fill="var(--sun)" opacity="${(1 - c / 100).toFixed(2)}"/>`;
+      });
+    }
+    const peak = hrs.reduce((m, h, i) => h.pop > hrs[m].pop ? i : m, 0);
+    if (hrs[peak].pop >= 20) s += `<text x="${x(peak)}" y="${popTop + popH - (hrs[peak].pop / 100) * popH - 4}" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="600" fill="var(--rain)">${hrs[peak].pop}%</text>`;
+    s += `<line id="cross" x1="0" x2="0" y1="${top - 8}" y2="${popTop + popH}" stroke="var(--ink-2)" stroke-width="1" visibility="hidden"/>`;
+    s += `<rect id="hit" x="${padL}" y="0" width="${W - padL - padR}" height="${H}" fill="transparent"/></svg><div class="tip" id="tip" hidden></div>`;
+    box.innerHTML = s;
+    const svg = box.querySelector("svg"), tip = $("tip"), cross = $("cross");
+    const move = ev => {
+      const r = svg.getBoundingClientRect(); const px = (ev.clientX - r.left) * (W / r.width);
+      const i = Math.min(n - 1, Math.max(0, Math.floor((px - padL) / step)));
+      const h = hrs[i];
+      cross.setAttribute("x1", x(i)); cross.setAttribute("x2", x(i)); cross.setAttribute("visibility", "visible");
+      tip.hidden = false;
+      tip.innerHTML = `<b>${fDay.format(h.t)} ${fHour.format(h.t)}</b>${h.temp}°F · ${esc(h.sf)}<br>Precip ${h.pop}%${cloudAt(h.t) != null ? ` · Clouds ${cloudAt(h.t)}%` : ""}<br>Wind ${esc(h.wind)}${h.rh != null ? `<br>Humidity ${h.rh}%${h.dp != null ? ` · Dew pt ${round(h.dp)}°` : ""}` : ""}`;
+      const left = (x(i) / W) * r.width + 8;
+      tip.style.left = Math.min(Math.max(left, 90), r.width - 80) + "px";
+      tip.style.top = "6px";
+    };
+    svg.addEventListener("pointermove", move);
+    svg.addEventListener("pointerdown", move);
+    svg.addEventListener("pointerleave", () => { tip.hidden = true; cross.setAttribute("visibility", "hidden"); });
+  }
+  let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { drawChart(); if ($("hist").open) drawHistChart(); }, 150); });
+
+  /* ---------- alerts ---------- */
+  async function loadAlerts() {
+    try {
+      const d = await getJSON(`${NWS}/alerts/active?point=${LAT},${LON}`);
+      const list = (d.features || []).map(x => x.properties)
+        .sort((a, b) => ["Extreme", "Severe", "Moderate", "Minor", "Unknown"].indexOf(a.severity) - ["Extreme", "Severe", "Moderate", "Minor", "Unknown"].indexOf(b.severity));
+      $("alerts").innerHTML = list.map(a => {
+        const until = a.ends || a.expires;
+        return `<details class="alert ${esc(a.severity || "Unknown")}">
+          <summary><span class="ev">${esc(a.event)}</span><span class="when">${until ? "Until " + fDay.format(new Date(until)) + " " + fTime.format(new Date(until)) : ""}</span><span class="more">Details</span></summary>
+          <div class="body">${a.headline ? `<b>${esc(a.headline)}</b>\n\n` : ""}${esc(a.description || "")}${a.instruction ? `\n\n<b>What to do</b>\n${esc(a.instruction)}` : ""}</div>
+        </details>`;
+      }).join("");
+    } catch (e) { /* keep whatever alerts were shown last */ }
+  }
+
+  /* ---------- sun & UV & air (Open-Meteo) ---------- */
+  async function loadSunAir() {
+    const [wx, aq] = await Promise.allSettled([
+      getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=sunrise,sunset,daylight_duration,sunshine_duration,uv_index_max,weather_code&hourly=cloud_cover&current=uv_index&timezone=${encodeURIComponent(TZ)}&past_days=7&forecast_days=8&timeformat=unixtime`),
+      getJSON(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&current=us_aqi,pm2_5,ozone&timezone=${encodeURIComponent(TZ)}`)
+    ]);
+    if (wx.status === "fulfilled") {
+      const d = wx.value.daily;
+      S.om = {};
+      (d.time || []).forEach((t, i) => {
+        S.om[fKey.format(new Date((t + 43200) * 1000))] = { rise: d.sunrise[i] * 1000, set: d.sunset[i] * 1000, len: d.daylight_duration?.[i], sun: d.sunshine_duration?.[i], uv: d.uv_index_max?.[i], code: d.weather_code?.[i] };
+      });
+      const hh = wx.value.hourly || {};
+      S.cloud = new Map((hh.time || []).map((t, i) => [t * 1000, hh.cloud_cover?.[i]]).filter(x => x[1] != null));
+      S.uvNow = wx.value.current?.uv_index ?? null;
+      renderSun(); renderNow();
+      if (S.periods) renderDays();
+      if (S.hours) drawChart();
+      if (S.hist) renderHist();
+    } else $("sun").innerHTML = `<div class="fail">Sunrise and sunset times didn't load.</div>`;
+    if (aq.status === "fulfilled") renderAir(aq.value.current || {});
+    else $("air").innerHTML = `<div class="fail">Air quality didn't load.</div>`;
+  }
+  function renderSun() {
+    const a = S.om?.[fKey.format(new Date())], b = S.om?.[fKey.format(new Date(Date.now() + 86400e3))];
+    if (!a) return;
+    const now = Date.now();
+    const frac = Math.min(1, Math.max(0, (now - a.rise) / (a.set - a.rise)));
+    const up = now > a.rise && now < a.set;
+    const hm = s => s == null ? "–" : `${Math.floor(s / 3600)}h ${Math.round((s % 3600) / 60)}m`;
+    const delta = b && a.len != null && b.len != null ? Math.round((b.len - a.len) / 60 * 10) / 10 : null;
+    const ang = Math.PI * (1 - frac), cx = 150 + 120 * Math.cos(ang), cy = 120 - 100 * Math.sin(ang);
+    $("sun-sub").textContent = up ? "Sun is up" : now < a.rise ? "Before sunrise" : "After sunset";
+    $("sun").innerHTML = `
+      <svg class="sunarc" viewBox="0 0 300 140" role="img" aria-label="Sun position between sunrise and sunset">
+        <path d="M30 120 A120 100 0 0 1 270 120" fill="none" stroke="var(--line)" stroke-width="2" stroke-dasharray="4 5"/>
+        ${up ? `<path d="M30 120 A120 100 0 0 1 ${cx.toFixed(1)} ${cy.toFixed(1)}" fill="none" stroke="var(--warm)" stroke-width="2.5"/>` : ""}
+        <line x1="10" x2="290" y1="120" y2="120" stroke="var(--ink-3)" stroke-width="1"/>
+        <circle cx="${up ? cx.toFixed(1) : (now < a.rise ? 30 : 270)}" cy="${up ? cy.toFixed(1) : 120}" r="9" fill="${up ? "var(--warm)" : "var(--ink-3)"}"/>
+        <text x="30" y="137" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--ink-2)">${fTime.format(new Date(a.rise))}</text>
+        <text x="270" y="137" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--ink-2)">${fTime.format(new Date(a.set))}</text>
+      </svg>
+      <dl class="kv">
+        <dt>Daylight today</dt><dd>${hm(a.len)}</dd>
+        <dt>Expected sunshine</dt><dd>${a.sun != null ? `${hrs1(a.sun)} h (${Math.round(a.sun / a.len * 100)}%)` : "–"}</dd>
+        <dt>Tomorrow</dt><dd>${delta != null ? (delta < 0 ? `${Math.abs(delta)} min shorter` : `${delta} min longer`) : "–"}</dd>
+        <dt>Tomorrow's sunrise</dt><dd>${b ? fTime.format(new Date(b.rise)) : "–"}</dd>
+        <dt>Peak UV today</dt><dd>${a.uv != null ? `${round(a.uv)} · ${uvWord(a.uv)}` : "–"}</dd>
+      </dl>`;
+  }
+  function renderAir(c) {
+    const v = c.us_aqi;
+    if (v == null) { $("air").innerHTML = `<div class="fail">No air quality reading right now.</div>`; return; }
+    const cats = [[50, "Good", "Air quality is satisfactory."], [100, "Moderate", "Unusually sensitive people should limit long outdoor exertion."],
+      [150, "Unhealthy for sensitive groups", "People with asthma, older adults and kids should take it easier outside."],
+      [200, "Unhealthy", "Everyone should cut back on long or heavy outdoor exertion."], [300, "Very unhealthy", "Avoid long outdoor exertion."], [500, "Hazardous", "Stay indoors with windows closed."]];
+    const ci = cats.findIndex(x => v <= x[0]); const cat = cats[ci < 0 ? 5 : ci];
+    const pos = ci < 0 ? 100 : (ci + (v - (ci ? cats[ci - 1][0] : 0)) / (cat[0] - (ci ? cats[ci - 1][0] : 0))) / 6 * 100;
+    $("air").innerHTML = `
+      <div class="bigread">${round(v)}<small>${esc(cat[1])}</small></div>
+      <div><div class="aqi-scale" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="aqi-mark"><span style="left:${Math.min(99, pos).toFixed(1)}%"></span></div></div>
+      <p style="margin:0;color:var(--ink-2);font-size:14px">${esc(cat[2])}</p>
+      <dl class="kv"><dt>Fine particles (PM2.5)</dt><dd>${round(c.pm2_5, 1)} µg/m³</dd><dt>Ozone</dt><dd>${round(c.ozone)} µg/m³</dd></dl>`;
+  }
+
+  /* ---------- Delaware River at Easton ---------- */
+  async function loadRiver() {
+    try {
+      const [g, sf] = await Promise.all([
+        getJSON(`https://api.water.noaa.gov/nwps/v1/gauges/${GAUGE}`),
+        getJSON(`https://api.water.noaa.gov/nwps/v1/gauges/${GAUGE}/stageflow`)
+      ]);
+      const cats = g.flood?.categories || {};
+      const th = { action: cats.action?.stage ?? 20, minor: cats.minor?.stage ?? 22, moderate: cats.moderate?.stage ?? 26, major: cats.major?.stage ?? 30 };
+      const obs = (sf.observed?.data || []).filter(d => d.primary != null && d.primary > -900).map(d => ({ t: new Date(d.validTime), v: d.primary }));
+      const fc = (sf.forecast?.data || []).filter(d => d.primary != null && d.primary > -900).map(d => ({ t: new Date(d.validTime), v: d.primary }));
+      if (!obs.length) throw new Error("no river obs");
+      const last = obs[obs.length - 1];
+      const sixAgo = obs.filter(o => o.t <= new Date(last.t.getTime() - 6 * 3600e3)).pop();
+      const diff = sixAgo ? last.v - sixAgo.v : null;
+      const peakFc = fc.length ? fc.reduce((m, d) => d.v > m.v ? d : m, fc[0]) : null;
+      const max = Math.max(th.major + 2, last.v + 1);
+      const pct = v => Math.min(100, (v / max) * 100);
+      const status = last.v >= th.major ? ["Major flooding", "var(--extreme)"] : last.v >= th.moderate ? ["Moderate flooding", "var(--warn)"]
+        : last.v >= th.minor ? ["Minor flooding", "var(--warn)"] : last.v >= th.action ? ["Near flood stage", "var(--watch)"] : ["Normal", "var(--ok)"];
+      // 3-day sparkline (observed solid, forecast dashed), own scale
+      const recent = obs.filter(o => o.t > new Date(last.t.getTime() - 72 * 3600e3));
+      const all = recent.concat(fc);
+      const t0 = all[0].t.getTime(), t1 = all[all.length - 1].t.getTime();
+      const vs = all.map(d => d.v), lo = Math.floor(Math.min(...vs) - .5), hi = Math.ceil(Math.max(...vs) + .5);
+      const SW = 300, SH = 70, sx = t => 6 + ((t - t0) / Math.max(1, t1 - t0)) * (SW - 12), sy = v => 8 + (1 - (v - lo) / Math.max(.1, hi - lo)) * (SH - 22);
+      const path = arr => arr.map((d, i) => (i ? "L" : "M") + sx(d.t.getTime()).toFixed(1) + " " + sy(d.v).toFixed(1)).join("");
+      const spark = `<svg class="spark" viewBox="0 0 ${SW} ${SH}" role="img" aria-label="River stage over the last three days${fc.length ? " and forecast" : ""}">
+        <path d="${path(recent)}" fill="none" stroke="var(--river)" stroke-width="2.2" stroke-linejoin="round"/>
+        ${fc.length ? `<path d="M${sx(last.t.getTime()).toFixed(1)} ${sy(last.v).toFixed(1)}${path(fc).replace(/^M/, "L")}" fill="none" stroke="var(--river)" stroke-width="2" stroke-dasharray="4 4" opacity=".75"/>` : ""}
+        <circle cx="${sx(last.t.getTime()).toFixed(1)}" cy="${sy(last.v).toFixed(1)}" r="3.5" fill="var(--river)"/>
+        <text x="6" y="${SH - 2}" font-family="var(--mono)" font-size="10" fill="var(--ink-3)">${fDay.format(new Date(t0))}</text>
+        <text x="${SW - 6}" y="${SH - 2}" text-anchor="end" font-family="var(--mono)" font-size="10" fill="var(--ink-3)">${fc.length ? "Forecast → " : ""}${fDay.format(new Date(t1))}</text>
+        <text x="${SW - 6}" y="12" text-anchor="end" font-family="var(--mono)" font-size="10" fill="var(--ink-3)">${hi} ft</text>
+        <text x="${SW - 6}" y="${SH - 14}" text-anchor="end" font-family="var(--mono)" font-size="10" fill="var(--ink-3)">${lo} ft</text>
+      </svg>`;
+      $("river").innerHTML = `
+        <div class="bigread">${round(last.v, 2)}<small>ft · <span style="color:${status[1]}">${status[0]}</span></small></div>
+        <div>
+          <div class="gauge" role="img" aria-label="Stage ${round(last.v, 1)} feet; flood stage ${th.minor} feet">
+            <div class="fill" style="width:${pct(last.v)}%"></div>
+            <div class="th" style="left:${pct(th.action)}%;background:var(--watch)"></div>
+            <div class="th" style="left:${pct(th.minor)}%;background:var(--warn)"></div>
+            <div class="th" style="left:${pct(th.moderate)}%;background:var(--warn);opacity:.7"></div>
+            <div class="th" style="left:${pct(th.major)}%;background:var(--extreme)"></div>
+          </div>
+          <div class="gticks"><span style="left:2%">0</span><span style="left:${pct(th.minor)}%">${th.minor}</span><span style="left:${pct(th.moderate)}%">${th.moderate}</span><span style="left:${Math.min(pct(th.major), 94)}%">${th.major} ft</span></div>
+        </div>
+        <div class="trend">${diff != null ? (Math.abs(diff) < .05 ? "Steady" : diff > 0 ? `Rising ${round(diff, 2)} ft` : `Falling ${round(Math.abs(diff), 2)} ft`) + " over 6 hours" : ""}${peakFc ? ` · Forecast peak ${round(peakFc.v, 1)} ft ${fDay.format(peakFc.t)} ${fHour.format(peakFc.t)}` : ""}</div>
+        ${spark}
+        <div class="obsnote">Reading at ${fDay.format(last.t)} ${fTime.format(last.t)}</div>`;
+    } catch (e) {
+      $("river").innerHTML = `<div class="fail">The river gauge didn't respond. <a href="https://water.noaa.gov/gauges/estn4" target="_blank" rel="noopener">Check it on water.noaa.gov</a>.</div>`;
+    }
+  }
+
+  /* ---------- last 7 days ---------- */
+  const WMO = c => c == null ? "" : c === 0 ? "Clear" : c <= 2 ? "Partly cloudy" : c === 3 ? "Cloudy" : c <= 48 ? "Fog"
+    : c <= 57 ? "Drizzle" : c <= 67 ? "Rain" : c <= 77 ? "Snow" : c <= 82 ? "Rain showers" : c <= 86 ? "Snow showers" : "Thunderstorms";
+  const isoOf = d => { const p = Object.fromEntries(f({ year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(d).map(x => [x.type, x.value])); return `${p.year}-${p.month}-${p.day}`; };
+  const keyOfIso = s => `${s.slice(5, 7)}/${s.slice(8, 10)}/${s.slice(0, 4)}`;
+  const acisNum = v => v == null || v === "M" || v === "" ? null : v === "T" ? 0.001 : (isNaN(+v) ? null : +v);
+
+  async function loadHist() {
+    if (S.histLoading) return;
+    S.histLoading = true;
+    try {
+      const dayDates = []; for (let i = 7; i >= 1; i--) dayDates.push(new Date(Date.now() - i * 86400e3));
+      const params = { sid: "ABEthr", sdate: isoOf(dayDates[0]), edate: isoOf(new Date()),
+        elems: [{ name: "maxt" }, { name: "mint" }, { name: "pcpn" }, { name: "snow" }, { name: "maxt", normal: "1" }, { name: "mint", normal: "1" }, { name: "pcpn", normal: "1" }] };
+      const start = new Date(Date.now() - 8 * 86400e3).toISOString().replace(/\.\d+Z$/, "Z");
+      const [ac, ob] = await Promise.allSettled([
+        getJSON(`https://data.rcc-acis.org/StnData?params=${encodeURIComponent(JSON.stringify(params))}`),
+        getJSON(`${NWS}/stations/KABE/observations?start=${encodeURIComponent(start)}&limit=500`)
+      ]);
+      const rec = {};
+      if (ac.status === "fulfilled") for (const r of (ac.value.data || [])) {
+        rec[keyOfIso(r[0])] = { hi: acisNum(r[1]), lo: acisNum(r[2]), pcp: acisNum(r[3]), snow: acisNum(r[4]), nhi: acisNum(r[5]), nlo: acisNum(r[6]), npcp: acisNum(r[7]), trace: r[3] === "T" };
+      }
+      let obs = [];
+      if (ob.status === "fulfilled") obs = (ob.value.features || []).map(x => x.properties).map(p => ({
+        t: new Date(p.timestamp), temp: cToF(val(p.temperature)), text: p.textDescription || "",
+        pcp: val(p.precipitationLastHour) != null ? val(p.precipitationLastHour) / 25.4 : null
+      })).filter(o => !isNaN(o.t)).sort((a, b) => a.t - b.t);
+      if (ac.status !== "fulfilled" && !obs.length) throw new Error("no history");
+      // Hourly precipitation: routine reports near :50–:59 carry the hour's total.
+      const byKey = {};
+      for (const o of obs) {
+        const k = fKey.format(o.t);
+        const b = byKey[k] || (byKey[k] = { hi: -Infinity, lo: Infinity, pcp: 0, hasP: false });
+        if (o.temp != null) { b.hi = Math.max(b.hi, o.temp); b.lo = Math.min(b.lo, o.temp); }
+        const m = +f({ minute: "2-digit" }).format(o.t);
+        if (o.pcp != null && m >= 45) { b.pcp += o.pcp; b.hasP = true; }
+      }
+      const keys = dayDates.map(d => fKey.format(d)).concat(fKey.format(new Date()));
+      S.hist = {
+        at: Date.now(), obs, acisOk: ac.status === "fulfilled",
+        days: keys.map((k, i) => {
+          const r = rec[k] || {}, b = byKey[k];
+          const today = i === keys.length - 1;
+          const useObs = (v, ov) => v != null ? [v, false] : (ov != null && isFinite(ov) ? [ov, true] : [null, false]);
+          const [hi, phi] = useObs(today ? null : r.hi, b && b.hi);
+          const [lo, plo] = useObs(today ? null : r.lo, b && b.lo);
+          const [pcp, pp] = useObs(today ? null : r.pcp, b && b.hasP ? b.pcp : null);
+          return { key: k, date: i < 7 ? dayDates[i] : new Date(), today, hi, lo, pcp, trace: !!r.trace && !today, snow: today ? null : r.snow, nhi: r.nhi, nlo: r.nlo, npcp: r.npcp, prelim: phi || plo || pp };
+        })
+      };
+      renderHist();
+    } catch (e) {
+      $("histbody").innerHTML = `<div class="fail">The past week's records didn't load. NOAA's climate database or the station feed may be busy; open this section again in a few minutes.</div>`;
+    } finally { S.histLoading = false; }
+  }
+
+  function renderHist() {
+    const H = S.hist; if (!H) return;
+    const days = H.days, past = days.filter(d => !d.today);
+    const sum = arr => arr.reduce((a, b) => a + b, 0);
+    const pcpTot = sum(past.map(d => d.pcp || 0)), pcpNorm = past.every(d => d.npcp != null) ? sum(past.map(d => d.npcp)) : null;
+    const withHi = past.filter(d => d.hi != null && d.nhi != null), withLo = past.filter(d => d.lo != null && d.nlo != null);
+    const depHi = withHi.length ? sum(withHi.map(d => d.hi - d.nhi)) / withHi.length : null;
+    const depLo = withLo.length ? sum(withLo.map(d => d.lo - d.nlo)) / withLo.length : null;
+    const sunTot = sum(past.map(d => S.om?.[d.key]?.sun || 0)), sunLen = sum(past.map(d => S.om?.[d.key]?.len || 0));
+    const warm = past.filter(d => d.hi != null).reduce((m, d) => !m || d.hi > m.hi ? d : m, null);
+    const cold = past.filter(d => d.lo != null).reduce((m, d) => !m || d.lo < m.lo ? d : m, null);
+    const sgn = v => { const r = Math.round(v); return (r > 0 ? "+" : r < 0 ? "−" : "±") + Math.abs(r) + "°"; };
+    $("hist-teaser").textContent = `${fDate.format(past[0].date)} – today · ${pcpTot.toFixed(2)} in of rain${depHi != null ? ` · highs ${sgn(depHi)} vs normal` : ""}`;
+
+    const temps = days.flatMap(d => [d.hi, d.lo, d.nhi, d.nlo]).filter(v => v != null && isFinite(v));
+    const tmin = Math.floor(Math.min(...temps) / 5) * 5 - 2, tmax = Math.ceil(Math.max(...temps) / 5) * 5 + 2, PX = 150 - 36;
+    const ty = v => 18 + (1 - (v - tmin) / (tmax - tmin)) * PX;   // px from top inside .tcol
+    const pmax = Math.max(0.5, ...days.map(d => d.pcp || 0));
+
+    const cols = days.map(d => {
+      const om = S.om?.[d.key];
+      const hasT = d.hi != null && d.lo != null;
+      const nb = d.nhi != null && d.nlo != null ? `<div class="nb" style="top:${ty(d.nhi).toFixed(1)}px;height:${Math.max(2, ty(d.nlo) - ty(d.nhi)).toFixed(1)}px" title="Normal ${d.nlo}°–${d.nhi}°"></div>` : "";
+      const bar = hasT ? `<div class="tb" style="top:${ty(d.hi).toFixed(1)}px;height:${Math.max(4, ty(d.lo) - ty(d.hi)).toFixed(1)}px"></div>
+        <span class="hv" style="top:${(ty(d.hi) - 16).toFixed(1)}px">${Math.round(d.hi)}°</span><span class="lv" style="top:${(ty(d.lo) + 4).toFixed(1)}px">${Math.round(d.lo)}°</span>` : "";
+      const dep = d.hi != null && d.nhi != null ? Math.round(d.hi - d.nhi) : null;
+      const pTxt = d.pcp == null ? "–" : d.trace && d.pcp < .01 ? "Trace" : d.pcp < .005 ? "0" : d.pcp.toFixed(2) + '"';
+      const ph = d.pcp ? Math.max(d.pcp >= .01 ? 2 : 0, (d.pcp / pmax) * 26) : 0;
+      return `<div class="hday${d.today ? " today" : ""}">
+        <span class="dn">${d.today ? "Today" : fDay.format(d.date)}<small>${fDate.format(d.date)}</small></span>
+        ${om?.code != null ? glyph(WMO(om.code), true) : '<span style="height:30px"></span>'}
+        <div class="tcol" role="img" aria-label="High ${d.hi ?? "unknown"}, low ${d.lo ?? "unknown"}${d.nhi != null ? `, normal ${d.nlo} to ${d.nhi}` : ""}">${nb}${bar}</div>
+        <span class="dep ${dep == null ? "eq" : dep > 1 ? "up" : dep < -1 ? "dn" : "eq"}">${dep == null ? "&nbsp;" : (dep > 0 ? "+" : dep < 0 ? "−" : "±") + Math.abs(dep) + "°"}</span>
+        <div class="hval"><div class="pbar">${ph ? `<i style="height:${ph.toFixed(1)}px"></i>` : ""}</div>${pTxt}${d.snow ? `<span>Snow ${d.snow < .05 ? "trace" : d.snow.toFixed(1) + '"'}</span>` : ""}</div>
+        <div class="hval"><span class="sunbar" style="width:44px"><i style="width:${om?.sun != null && om.len ? (om.sun / om.len * 100).toFixed(0) : 0}%"></i></span>${om?.sun != null ? hrs1(om.sun) + " h sun" : ""}</div>
+        ${d.prelim ? '<span class="prelim">prelim.</span>' : ""}
+      </div>`;
+    }).join("");
+
+    $("histbody").innerHTML = `
+      <div class="hsum">
+        <span>Rain <b>${pcpTot.toFixed(2)} in</b>${pcpNorm != null ? ` <span style="color:var(--ink-3)">(normal ${pcpNorm.toFixed(2)})</span>` : ""}</span>
+        ${depHi != null ? `<span>Highs <b>${sgn(depHi)}</b> vs normal</span>` : ""}
+        ${depLo != null ? `<span>Lows <b>${sgn(depLo)}</b></span>` : ""}
+        ${warm ? `<span>Warmest <b>${Math.round(warm.hi)}°</b> ${fDay.format(warm.date)}</span>` : ""}
+        ${cold ? `<span>Coldest <b>${Math.round(cold.lo)}°</b> ${fDay.format(cold.date)}</span>` : ""}
+        ${sunLen ? `<span>Sunshine <b>${hrs1(sunTot)} h</b> of ${hrs1(sunLen)}</span>` : ""}
+      </div>
+      <div class="hdays-wrap"><div class="hdays" style="--n:${days.length}">${cols}</div></div>
+      <div class="chartbox" id="hchart"></div>
+      <div class="hnote">Striped band = normal high–low for the date. ${H.acisOk ? "Highs, lows and rain are NOAA's official Allentown (ABE) records;" : "NOAA's official records didn't load, so"} ${days.some(d => d.prelim) ? "“prelim.” days and today come from the station's hourly readings until the official numbers post (usually by the next morning)." : "today comes from the station's hourly readings."} Sunshine hours are model estimates.</div>`;
+    drawHistChart();
+  }
+
+  function drawHistChart() {
+    const box = $("hchart"); const obs = S.hist?.obs?.filter(o => o.temp != null);
+    if (!box) return;
+    if (!obs || obs.length < 6) { box.innerHTML = `<div class="fail">Hourly readings for the week aren't available.</div>`; return; }
+    const W = Math.max(320, box.clientWidth - 16), narrow = W < 620, H = 210, padL = 34, padR = 12, top = 20, tempH = 110, pTop = top + tempH + 18, pH = 34;
+    const endMs = Date.now();
+    const shown = obs.filter(o => o.t.getTime() >= endMs - 7.5 * 86400e3);
+    const sMs = shown[0].t.getTime();
+    const x = ms => padL + ((ms - sMs) / (endMs - sMs)) * (W - padL - padR);
+    const vals = shown.map(o => o.temp);
+    let lo = Math.floor((Math.min(...vals) - 2) / 5) * 5, hi = Math.ceil((Math.max(...vals) + 2) / 5) * 5; if (hi - lo < 10) hi = lo + 10;
+    const y = v => top + tempH - ((v - lo) / (hi - lo)) * tempH;
+    let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Hourly temperature and rainfall at Allentown over the past week">`;
+    // nights from sunrise/sunset
+    Object.values(S.om || {}).forEach((o, i, arr) => {
+      const next = arr[i + 1]; const ns = o.set, ne = next ? next.rise : o.set + 12 * 3600e3;
+      const a = Math.max(sMs, ns), b = Math.min(endMs, ne);
+      if (b > a) s += `<rect x="${x(a).toFixed(1)}" y="${top - 6}" width="${(x(b) - x(a)).toFixed(1)}" height="${pTop + pH - top + 6}" fill="var(--night)"/>`;
+    });
+    for (let v = lo; v <= hi; v += (hi - lo > 30 ? 10 : 5)) {
+      s += `<line x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${padL - 6}" y="${y(v) + 4}" text-anchor="end" font-family="var(--mono)" font-size="11" fill="var(--ink-3)">${v}°</text>`;
+    }
+    // midnights + day labels
+    for (let ms = sMs; ms < endMs + 86400e3; ms += 3600e3) {
+      const hr = +f({ hour: "numeric", hour12: false }).format(new Date(ms)) % 24;
+      const mm = +f({ minute: "2-digit" }).format(new Date(ms));
+      if (hr === 0 && ms <= endMs) {
+        const xm = ms - mm * 60e3; if (xm < sMs) continue;
+        s += `<line x1="${x(xm).toFixed(1)}" x2="${x(xm).toFixed(1)}" y1="${top - 8}" y2="${pTop + pH}" stroke="var(--ink-3)" stroke-dasharray="2 3"/>`;
+        s += `<text x="${(x(xm) + 4).toFixed(1)}" y="${top - 8}" font-family="var(--body)" font-weight="700" font-size="10.5" fill="var(--ink-2)" letter-spacing=".06em">${(narrow ? fDay.format(new Date(xm + 3600e3)).slice(0, 2) : fDay.format(new Date(xm + 3600e3))).toUpperCase()}</text>`;
+      }
+    }
+    // temperature line (break across gaps > 3 h)
+    let path = "", prev = null;
+    shown.forEach(o => { const ms = o.t.getTime(); path += (prev && ms - prev < 3 * 3600e3 ? "L" : "M") + x(ms).toFixed(1) + " " + y(o.temp).toFixed(1); prev = ms; });
+    s += `<path d="${path}" fill="none" stroke="var(--warm)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    // daily max/min labels
+    const byDay = {};
+    shown.forEach(o => { const k = fKey.format(o.t); const b = byDay[k] || (byDay[k] = { mx: o, mn: o }); if (o.temp > b.mx.temp) b.mx = o; if (o.temp < b.mn.temp) b.mn = o; });
+    Object.values(byDay).forEach(b => {
+      [[b.mx, -7], [b.mn, 15]].forEach(([o, dy]) => {
+        const xx = x(o.t.getTime()); if (xx < padL + 8 || xx > W - padR - 8) return;
+        s += `<circle cx="${xx.toFixed(1)}" cy="${y(o.temp).toFixed(1)}" r="2.6" fill="var(--surface)" stroke="var(--warm)" stroke-width="1.6"/><text x="${xx.toFixed(1)}" y="${(y(o.temp) + dy).toFixed(1)}" text-anchor="middle" font-family="var(--mono)" font-size="10.5" font-weight="600" fill="var(--ink)">${Math.round(o.temp)}°</text>`;
+      });
+    });
+    // hourly rain bars
+    const rains = shown.filter(o => o.pcp != null && o.pcp > 0 && +f({ minute: "2-digit" }).format(o.t) >= 45);
+    const rmax = Math.max(0.1, ...rains.map(o => o.pcp));
+    const bw = Math.max(1.5, (W - padL - padR) / (7.5 * 24) - .5);
+    s += `<line x1="${padL}" x2="${W - padR}" y1="${pTop + pH}" y2="${pTop + pH}" stroke="var(--line)"/><text x="${padL - 4}" y="${pTop + 10}" text-anchor="end" font-family="var(--mono)" font-size="9.5" fill="var(--ink-3)">${rmax.toFixed(2).replace(/^0/, "")}"</text>`;
+    rains.forEach(o => { const h = (o.pcp / rmax) * pH; s += `<rect x="${(x(o.t.getTime()) - bw).toFixed(1)}" y="${(pTop + pH - h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" fill="var(--rain)"/>`; });
+    s += `<text x="${padL}" y="${H - 4}" font-family="var(--mono)" font-size="10.5" fill="var(--ink-3)">Hourly rain at Allentown (inches)</text>`;
+    s += `<line id="hcross" x1="0" x2="0" y1="${top - 6}" y2="${pTop + pH}" stroke="var(--ink-2)" visibility="hidden"/></svg><div class="tip" id="htip" hidden></div>`;
+    box.innerHTML = s;
+    const svg = box.querySelector("svg"), tip = $("htip"), cross = $("hcross");
+    const move = ev => {
+      const r = svg.getBoundingClientRect(); const px = (ev.clientX - r.left) * (W / r.width);
+      const ms = sMs + ((px - padL) / (W - padL - padR)) * (endMs - sMs);
+      const o = shown.reduce((m, q) => Math.abs(q.t - ms) < Math.abs(m.t - ms) ? q : m, shown[0]);
+      const xx = x(o.t.getTime());
+      cross.setAttribute("x1", xx); cross.setAttribute("x2", xx); cross.setAttribute("visibility", "visible");
+      tip.hidden = false;
+      tip.innerHTML = `<b>${fDay.format(o.t)} ${fTime.format(o.t)}</b>${Math.round(o.temp)}°F${o.text ? " · " + esc(o.text) : ""}${o.pcp ? `<br>Rain last hour ${o.pcp.toFixed(2)}"` : ""}`;
+      tip.style.left = Math.min(Math.max((xx / W) * r.width, 90), r.width - 80) + "px"; tip.style.top = "6px";
+    };
+    svg.addEventListener("pointermove", move); svg.addEventListener("pointerdown", move);
+    svg.addEventListener("pointerleave", () => { tip.hidden = true; cross.setAttribute("visibility", "hidden"); });
+  }
+
+  const histEl = $("hist");
+  try { if (localStorage.getItem("ew-hist") === "1") histEl.open = true; } catch (e) {}
+  histEl.addEventListener("toggle", () => {
+    try { localStorage.setItem("ew-hist", histEl.open ? "1" : "0"); } catch (e) {}
+    if (histEl.open) { if (!S.hist || Date.now() - S.hist.at > 20 * 60e3) loadHist(); else renderHist(); }
+  });
+
+  /* ---------- refresh loop ---------- */
+  async function loadAll() {
+    $("refresh").textContent = "Refreshing…";
+    await Promise.allSettled([loadAlerts(), loadForecast(), loadHourly(), loadSunAir(), loadRiver(),
+      $("hist").open && (!S.hist || Date.now() - S.hist.at > 20 * 60e3) ? loadHist() : null]);
+    await loadNow();
+    $("refresh").textContent = "Refresh";
+    $("updated").textContent = "Updated " + fClock.format(new Date());
+    clearTimeout(S.refreshTimer);
+    S.refreshTimer = setTimeout(() => { if (!document.hidden) loadAll(); else S.stale = true; }, 5 * 60e3);
+  }
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && S.stale) { S.stale = false; loadAll(); } });
+  $("refresh").addEventListener("click", loadAll);
+  loadAll();
+})();
+</script>
+</body>
+</html>

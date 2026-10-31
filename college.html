@@ -1,0 +1,1151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Top 25 Gameday</title>
+<link rel="manifest" href="college.webmanifest">
+<meta name="theme-color" content="#0B1016">
+<link rel="icon" type="image/png" href="icons/college-192.png">
+<link rel="apple-touch-icon" href="icons/college-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="College">
+<link rel="stylesheet" href="assets/nav.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap">
+<style>
+/* Layout: turf-green header band with yard lines, then the Utah/BYU spotlight pair,
+   then a two-column field: ranked games grid (left) and the poll (right). */
+:root{
+  --bg:#ECF0ED; --surface:#FFFFFF; --surface-2:#F4F7F5; --ink:#141A16; --ink-2:#47524B; --ink-3:#77837B;
+  --line:#D3DBD5; --field:#1C5A36; --field-2:#174C2E; --chalk:#F4F8F5;
+  --accent:#1F6B3F; --live:#D24A0E; --live-bg:#FCE9DF; --win:#1D7443; --loss:#A8281C; --gold:#9A6A00; --gold-bg:#FBF0D3;
+  --utah:#C40000; --utah-band:#CC0000; --utah-soft:#FBE7E7;
+  --byu:#0054A6; --byu-band:#002E5D; --byu-soft:#E3EDF8;
+  --display:"Big Shoulders Display","Barlow Semi Condensed","Arial Narrow",Impact,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --label:"Barlow Semi Condensed","Barlow","Arial Narrow",system-ui,sans-serif;
+  --r:10px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1310; --surface:#151D18; --surface-2:#1B241F; --ink:#E6ECE8; --ink-2:#A6B2AA; --ink-3:#7A877F;
+    --line:#29342D; --field:#123C25; --field-2:#0E301D; --chalk:#E9F1EC;
+    --accent:#56C487; --live:#FF7B42; --live-bg:#3A2117; --win:#5BCB8A; --loss:#FF7D6E; --gold:#E9B949; --gold-bg:#33290F;
+    --utah:#FF4B45; --utah-band:#B30000; --utah-soft:#2E1717;
+    --byu:#6EA9EE; --byu-band:#123F73; --byu-soft:#14243A;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1310; --surface:#151D18; --surface-2:#1B241F; --ink:#E6ECE8; --ink-2:#A6B2AA; --ink-3:#7A877F;
+  --line:#29342D; --field:#123C25; --field-2:#0E301D; --chalk:#E9F1EC;
+  --accent:#56C487; --live:#FF7B42; --live-bg:#3A2117; --win:#5BCB8A; --loss:#FF7D6E; --gold:#E9B949; --gold-bg:#33290F;
+  --utah:#FF4B45; --utah-band:#B30000; --utah-soft:#2E1717;
+  --byu:#6EA9EE; --byu-band:#123F73; --byu-soft:#14243A;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--body);-webkit-font-smoothing:antialiased;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+img{max-width:100%}
+[hidden]{display:none!important}
+a{color:inherit}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.wrap{max-width:1280px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- Header band ---------- */
+.band{background:var(--field);color:var(--chalk);position:relative;overflow:hidden}
+.band::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.16;
+  background:
+   repeating-linear-gradient(90deg, transparent 0 calc(10% - 2px), var(--chalk) calc(10% - 2px) 10%),
+   repeating-linear-gradient(90deg, transparent 0 calc(2% - 1px), var(--chalk) calc(2% - 1px) 2%) bottom/100% 8px no-repeat,
+   repeating-linear-gradient(90deg, transparent 0 calc(2% - 1px), var(--chalk) calc(2% - 1px) 2%) top/100% 8px no-repeat}
+.band .wrap{position:relative;padding-block:22px 18px;display:flex;flex-wrap:wrap;gap:14px 28px;align-items:end;justify-content:space-between}
+.brand h1{margin:0;font:900 clamp(34px,6vw,56px)/.9 var(--display);letter-spacing:.01em;text-transform:uppercase;text-wrap:balance}
+.brand p{margin:6px 0 0;font:600 13px/1.3 var(--label);letter-spacing:.12em;text-transform:uppercase;opacity:.85}
+.brand p b{color:#fff}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.ctl{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.28);color:var(--chalk);border-radius:8px;padding:7px 11px;
+  font:600 14px/1.1 var(--label);letter-spacing:.04em;cursor:pointer}
+.ctl:hover{background:rgba(255,255,255,.18)}
+select.ctl option{color:#141A16}
+.wknav{display:inline-flex;gap:6px;align-items:center;min-width:0;max-width:100%}
+.wknav select{min-width:0;max-width:min(240px,48vw)}
+.ctl:disabled{opacity:.4;cursor:default}
+.ctl.toggle[aria-pressed="false"]{opacity:.65}
+.meta{font:500 13px/1.3 var(--label);letter-spacing:.04em;opacity:.9;display:flex;gap:6px 14px;flex-wrap:wrap;width:100%}
+.meta .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#FFB28A;margin-right:6px;vertical-align:1px}
+.meta .dot.on{background:#FF6A2B;box-shadow:0 0 0 0 rgba(255,106,43,.7);animation:pulse 1.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,106,43,.6)}70%{box-shadow:0 0 0 8px rgba(255,106,43,0)}100%{box-shadow:0 0 0 0 rgba(255,106,43,0)}}
+
+main.wrap{padding-block:22px 40px;display:flex;flex-direction:column;gap:28px}
+.err{background:var(--live-bg);color:var(--ink);border:1px solid var(--live);border-radius:var(--r);padding:12px 14px;font-weight:500}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+.sec-h h2{margin:0;font:800 26px/1 var(--display);text-transform:uppercase;letter-spacing:.02em}
+.sec-h .sub{color:var(--ink-3);font:500 13px/1.3 var(--label);letter-spacing:.06em;text-transform:uppercase}
+
+/* ---------- Spotlight ---------- */
+.spots{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:16px}
+.spot{--team:var(--ink);--team-band:var(--ink);--team-soft:var(--surface-2);background:var(--surface);border-radius:14px;overflow:hidden;
+  border:1px solid var(--line);display:flex;flex-direction:column;min-width:0}
+.spot.utah{--team:var(--utah);--team-band:var(--utah-band);--team-soft:var(--utah-soft)}
+.spot.byu{--team:var(--byu);--team-band:var(--byu-band);--team-soft:var(--byu-soft)}
+.spot.both{grid-column:1/-1}
+.spot-band{background:var(--team-band);color:#fff;padding:12px 16px 10px;display:flex;justify-content:space-between;align-items:end;gap:10px;flex-wrap:wrap}
+.spot.both .spot-band{background:linear-gradient(100deg,var(--utah-band) 0 49.5%,var(--byu-band) 50.5% 100%)}
+.spot-band .nm{font:900 30px/.95 var(--display);text-transform:uppercase;letter-spacing:.02em}
+.spot-band .tag{font:600 13px/1.2 var(--label);letter-spacing:.08em;text-transform:uppercase;opacity:.92}
+.spot-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px;flex:1}
+.spot-status{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font:600 14px/1.2 var(--label);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2)}
+.bug{display:flex;flex-direction:column;gap:6px}
+.bug-row{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center;padding:6px 10px;border-radius:8px}
+.bug-row.fav{background:var(--team-soft)}
+.spot.both .bug-row.fav.u{background:var(--utah-soft)}
+.spot.both .bug-row.fav.b{background:var(--byu-soft)}
+.bug-row img{width:40px;height:40px;object-fit:contain}
+.bug-row .tn{font:700 19px/1.15 var(--body);min-width:0;overflow-wrap:anywhere}
+.bug-row .tn small{display:block;font:500 13px/1.2 var(--label);color:var(--ink-3);letter-spacing:.03em}
+.bug-row .rk{font:700 13px/1 var(--label);color:var(--ink-3);margin-right:5px}
+.bug-row .big{font:800 46px/1 var(--display);font-variant-numeric:tabular-nums;min-width:2ch;text-align:right}
+.bug-row.lose .big,.bug-row.lose .tn{color:var(--ink-3)}
+.lines{overflow-x:auto}
+.lines table{border-collapse:collapse;width:100%;font:600 14px/1 var(--label);font-variant-numeric:tabular-nums;min-width:280px}
+.lines th,.lines td{padding:6px 8px;text-align:center;border-bottom:1px solid var(--line)}
+.lines th{color:var(--ink-3);font-weight:600;font-size:12px;letter-spacing:.08em}
+.lines td:first-child,.lines th:first-child{text-align:left}
+.lines td.t{font-weight:700;color:var(--ink)}
+.play{background:var(--surface-2);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--ink-2)}
+.play b{display:block;font:600 12px/1 var(--label);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:5px}
+.spot-foot{margin-top:auto;display:flex;justify-content:space-between;gap:8px 14px;flex-wrap:wrap;font-size:13px;color:var(--ink-3);align-items:center}
+.gc{font:600 13px/1 var(--label);letter-spacing:.06em;text-transform:uppercase;color:var(--accent);text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:2px}
+.gc:hover{color:var(--ink)}
+.offweek{display:grid;gap:8px}
+.offweek .ln{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;align-items:baseline;font-size:15px}
+.offweek .ln b{font:600 12px/1 var(--label);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+
+/* mini field */
+.fieldbar{position:relative;height:34px;border-radius:6px;overflow:hidden;background:var(--field);
+  background-image:repeating-linear-gradient(90deg,transparent 0 calc(10% - 1px),rgba(255,255,255,.35) calc(10% - 1px) 10%);
+  margin-inline:0}
+.fieldbar .ez{position:absolute;top:0;bottom:0;width:8%;display:grid;place-items:center;color:#fff;font:800 11px/1 var(--label);letter-spacing:.08em;writing-mode:vertical-rl;transform:rotate(180deg)}
+.fieldbar .ez.r{right:0;transform:none}
+.fieldbar .play-area{position:absolute;left:8%;right:8%;top:0;bottom:0}
+.fieldbar .ball{position:absolute;top:50%;width:16px;height:10px;margin:-5px 0 0 -8px;background:#8B4A1E;border:1.5px solid #fff;border-radius:50%;transition:left .6s ease}
+.fieldbar .arrow{position:absolute;top:50%;height:2px;background:#FFD24A;margin-top:-1px;transition:left .6s ease,width .6s ease}
+.fieldbar .rz{position:absolute;top:0;bottom:0;background:rgba(220,40,40,.28)}
+.fieldcap{display:flex;justify-content:space-between;gap:8px;font:600 13px/1.2 var(--label);letter-spacing:.04em;color:var(--ink-2);margin-top:6px;flex-wrap:wrap}
+.fieldcap .rzt{color:var(--loss)}
+
+/* ---------- Pills & chips ---------- */
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 9px;font:700 12px/1.2 var(--label);letter-spacing:.08em;text-transform:uppercase;background:var(--surface-2);color:var(--ink-2);white-space:nowrap}
+.pill.live{background:var(--live-bg);color:var(--live)}
+.pill.live::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.25}}
+.pill.final{background:transparent;border:1px solid var(--line);color:var(--ink-2)}
+.chip{display:inline-block;border-radius:4px;padding:2px 6px;font:700 11px/1.2 var(--label);letter-spacing:.08em;text-transform:uppercase;background:var(--gold-bg);color:var(--gold)}
+.chip.rr{background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line)}
+
+/* ---------- Main columns ---------- */
+.cols{display:grid;grid-template-columns:minmax(0,1fr);gap:28px}
+@media (min-width:1060px){.cols{grid-template-columns:minmax(0,1fr) 340px}}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tab{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 13px;cursor:pointer;font:600 14px/1 var(--label);letter-spacing:.04em;color:var(--ink-2)}
+.tab[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tab .c{opacity:.65;margin-left:4px;font-variant-numeric:tabular-nums}
+.chk{display:inline-flex;gap:6px;align-items:center;font:600 14px/1 var(--label);color:var(--ink-2);margin-left:6px;cursor:pointer}
+.games{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,290px),1fr));gap:12px;margin-top:14px}
+.game{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px 10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.game.live{border-color:color-mix(in srgb,var(--live) 45%,var(--line))}
+.game.utah{box-shadow:inset 4px 0 0 var(--utah)}
+.game.byu{box-shadow:inset 4px 0 0 var(--byu)}
+.game.utah.byu{box-shadow:inset 4px 0 0 var(--utah),inset -4px 0 0 var(--byu)}
+.g-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;min-height:22px}
+.g-top .tv{font:600 12px/1 var(--label);letter-spacing:.06em;color:var(--ink-3);text-transform:uppercase}
+.trow{display:grid;grid-template-columns:24px 26px minmax(0,1fr) auto;gap:8px;align-items:center}
+.trow img{width:26px;height:26px;object-fit:contain}
+.trow .rk{font:700 13px/1 var(--label);color:var(--ink-3);text-align:right;font-variant-numeric:tabular-nums}
+.trow .tn{font-weight:600;font-size:15.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trow .tn small{font:500 12.5px/1 var(--label);color:var(--ink-3);margin-left:6px;letter-spacing:.02em}
+.trow .sc{font:800 26px/1 var(--display);font-variant-numeric:tabular-nums;min-width:2ch;text-align:right;display:flex;align-items:center;gap:6px}
+.trow.lose .tn,.trow.lose .sc{color:var(--ink-3)}
+.trow.fav-utah .tn{color:var(--utah)}
+.trow.fav-byu .tn{color:var(--byu)}
+.ballico{width:12px;height:8px;flex:none;color:var(--live)}
+.g-foot{display:flex;justify-content:space-between;align-items:center;gap:6px 10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:7px;margin-top:2px;font-size:13px;color:var(--ink-3)}
+.g-foot .dd{color:var(--ink-2);font-weight:600}
+.g-foot .dd.rz{color:var(--loss)}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:22px;color:var(--ink-3);text-align:center;margin-top:14px}
+
+/* ---------- Poll ---------- */
+.poll{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;align-self:start}
+@media (min-width:1060px){.poll{position:sticky;top:12px}}
+.poll-h{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.poll-h h2{margin:0;font:800 24px/1 var(--display);text-transform:uppercase}
+.poll-h .sub{font:500 12.5px/1.3 var(--label);color:var(--ink-3);letter-spacing:.04em}
+.poll ol{list-style:none;margin:0;padding:0}
+.poll li{display:grid;grid-template-columns:26px 28px 22px minmax(0,1fr) auto;gap:8px;align-items:center;padding:7px 14px;border-bottom:1px solid var(--line);font-size:14.5px}
+.poll li:last-child{border-bottom:0}
+.poll li.utah{background:var(--utah-soft)}
+.poll li.byu{background:var(--byu-soft)}
+.poll .pr{font:800 20px/1 var(--display);text-align:right;font-variant-numeric:tabular-nums}
+.poll .tr{font:600 11px/1 var(--label);text-align:center;color:var(--ink-3)}
+.poll .tr.up{color:var(--win)} .poll .tr.dn{color:var(--loss)}
+.poll img{width:22px;height:22px;object-fit:contain}
+.poll .pt{min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.poll .pt small{font:500 12px/1 var(--label);color:var(--ink-3);margin-left:5px}
+.poll .ws{font:600 12.5px/1.15 var(--label);letter-spacing:.02em;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--ink-3)}
+.poll .ws.w{color:var(--win)} .poll .ws.l{color:var(--loss)} .poll .ws.lv{color:var(--live)}
+.rv{padding:10px 14px;border-top:1px solid var(--line);font-size:13.5px;color:var(--ink-2)}
+.rv b{font:600 12px/1 var(--label);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);display:block;margin-bottom:4px}
+.pollsel{display:flex;gap:6px;flex-wrap:wrap}
+.pollsel .tab{padding:4px 10px;font-size:13px}
+
+/* ---------- Road to the Playoff ---------- */
+.cfp-next{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:14px;font:600 14px/1.3 var(--label);letter-spacing:.03em}
+.cfp-next b{font:800 20px/1 var(--display);text-transform:uppercase;letter-spacing:.02em}
+.cfp-next span{color:var(--ink-3)}
+.road{display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+@media (min-width:1060px){.road{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr)}}
+.rcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;min-width:0;align-self:start}
+.rcard-h{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.rcard-h h3{margin:0;font:800 24px/1 var(--display);text-transform:uppercase}
+.rcard-h .sub{font:500 12.5px/1.35 var(--label);color:var(--ink-3);letter-spacing:.03em}
+.favpath{display:grid;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.favpath div{font-size:14px;color:var(--ink-2);padding:7px 10px;border-radius:8px}
+.favpath .utah{background:var(--utah-soft)} .favpath .byu{background:var(--byu-soft)}
+.favpath b{color:var(--ink)}
+.quads{display:grid;grid-template-columns:minmax(0,1fr);gap:0}
+.semi{font:600 11.5px/1 var(--label);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);padding:10px 14px 4px}
+.quad{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:10px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--line)}
+.quad .vs{font:600 11px/1 var(--label);color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.bt{display:grid;grid-template-columns:24px 22px minmax(0,1fr);gap:7px;align-items:center;font-size:14px;padding:3px 0}
+.bt .sd{font:800 18px/1 var(--display);text-align:right;font-variant-numeric:tabular-nums}
+.bt img{width:22px;height:22px;object-fit:contain}
+.bt .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.bt .nm small{font:500 11.5px/1 var(--label);color:var(--ink-3);margin-left:5px;font-weight:500;letter-spacing:.02em}
+.bt.utah .nm{color:var(--utah)} .bt.byu .nm{color:var(--byu)}
+.bt.bye .nm::after{content:"Bye";font:700 10.5px/1 var(--label);letter-spacing:.08em;text-transform:uppercase;color:var(--win);margin-left:6px}
+.fr{border-left:2px solid var(--line);padding-left:10px}
+.fr .host{font:500 11.5px/1.2 var(--label);color:var(--ink-3);letter-spacing:.02em}
+.outs{padding:10px 14px 14px;display:grid;gap:4px}
+.outs .bt .sd{font-size:14px;color:var(--ink-3)}
+.rnote{padding:10px 14px 14px;font-size:12.5px;color:var(--ink-3);line-height:1.45}
+.b12 table{width:100%;border-collapse:collapse;font-size:14px}
+.b12 th{font:600 11px/1 var(--label);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);padding:7px 10px;text-align:right}
+.b12 th:first-child,.b12 td:first-child{text-align:left}
+.b12 td{padding:6px 10px;border-top:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.b12 td:first-child{display:flex;gap:8px;align-items:center;font-weight:600;white-space:nowrap}
+.b12 td:first-child img{width:20px;height:20px;object-fit:contain}
+.b12 td:first-child .rk{font:700 12px/1 var(--label);color:var(--ink-3);min-width:18px;text-align:right}
+.b12 tr.utah td{background:var(--utah-soft)} .b12 tr.byu td{background:var(--byu-soft)}
+.b12 tr.line td{border-top:2px dashed var(--ink-3)}
+.b12 td.tline{display:table-cell;font:600 11px/1 var(--label);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);padding:6px 10px;text-align:center !important;background:var(--surface-2)}
+.remain{padding:10px 14px 14px;display:grid;gap:10px}
+.remain h4{margin:0 0 4px;font:800 17px/1 var(--display);text-transform:uppercase}
+.remain h4.utah{color:var(--utah)} .remain h4.byu{color:var(--byu)}
+.remain ul{list-style:none;margin:0;padding:0;display:grid;gap:3px;font-size:13.5px}
+.remain li{display:flex;justify-content:space-between;gap:10px}
+.remain li span:last-child{color:var(--ink-3);font:500 12.5px/1.3 var(--label);white-space:nowrap}
+.remain li.hw{font-weight:700}
+.rounds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px;padding:12px 14px}
+.rounds h4{margin:0 0 8px;font:800 18px/1 var(--display);text-transform:uppercase}
+.rounds .games{margin-top:0;grid-template-columns:minmax(0,1fr)}
+@media (max-width:560px){.quad{grid-template-columns:minmax(0,1fr);gap:6px}.fr{margin-left:16px}}
+.chip.cfp{background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}
+footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
+.skel{height:180px;border-radius:14px;background:linear-gradient(90deg,var(--surface) 0%,var(--surface-2) 50%,var(--surface) 100%);background-size:200% 100%;animation:sh 1.4s infinite;border:1px solid var(--line)}
+@keyframes sh{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:520px){
+  .bug-row{grid-template-columns:32px minmax(0,1fr) auto;gap:10px}
+  .bug-row img{width:32px;height:32px}
+  .bug-row .big{font-size:38px}
+  .spot-band .nm{font-size:26px}
+}
+</style>
+</head>
+<body>
+<nav class="sitenav" aria-label="Dashboards"><div class="sitenav-in"><a href="./"><img src="icons/home-64.png" alt="">Home</a><a href="weather.html"><img src="icons/weather-64.png" alt="">Weather</a><a href="college.html" aria-current="page"><img src="icons/college-64.png" alt="">College</a><a href="nfl.html"><img src="icons/nfl-64.png" alt="">NFL</a></div></nav>
+
+<div class="band">
+  <div class="wrap">
+    <div class="brand">
+      <h1>Top 25 Gameday</h1>
+      <p><b>Utah</b> · <b>BYU</b> · every ranked game, live</p>
+    </div>
+    <div class="controls">
+      <span class="wknav">
+        <button id="prevwk" class="ctl" type="button" aria-label="Previous week" disabled>‹ Prev</button>
+        <select id="week" class="ctl" aria-label="Week"><option>Loading weeks…</option></select>
+        <button id="nextwk" class="ctl" type="button" aria-label="Next week" disabled>Next ›</button>
+      </span>
+      <button id="refresh" class="ctl" type="button">Refresh</button>
+      <button id="auto" class="ctl toggle" type="button" aria-pressed="true">Auto-refresh on</button>
+    </div>
+    <div class="meta" aria-live="polite">
+      <span><span id="dot" class="dot"></span><span id="livecount">Connecting to the scoreboard…</span></span>
+      <span id="updated"></span>
+      <span id="next"></span>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <div id="err" class="err" hidden></div>
+
+  <section aria-labelledby="spot-h">
+    <div class="sec-h"><h2 id="spot-h">Spotlight</h2><span class="sub" id="spot-sub">Utah Utes &amp; BYU Cougars</span></div>
+    <div id="spots" class="spots"><div class="skel"></div><div class="skel"></div></div>
+  </section>
+
+  <div class="cols">
+    <section aria-labelledby="games-h">
+      <div class="sec-h"><h2 id="games-h">Ranked games</h2><span class="sub" id="games-sub"></span></div>
+      <div class="tabs" role="group" aria-label="Filter games">
+        <button class="tab" type="button" data-f="all" aria-pressed="true">All<span class="c" id="c-all"></span></button>
+        <button class="tab" type="button" data-f="in" aria-pressed="false">Live<span class="c" id="c-in"></span></button>
+        <button class="tab" type="button" data-f="pre" aria-pressed="false">Upcoming<span class="c" id="c-pre"></span></button>
+        <button class="tab" type="button" data-f="post" aria-pressed="false">Final<span class="c" id="c-post"></span></button>
+        <button class="tab" type="button" data-f="upset" aria-pressed="false">Upsets<span class="c" id="c-upset"></span></button>
+        <label class="chk"><input type="checkbox" id="rr"> Ranked vs. ranked</label>
+      </div>
+      <div id="games" class="games"></div>
+    </section>
+
+    <aside class="poll" aria-labelledby="poll-h">
+      <div class="poll-h">
+        <h2 id="poll-h">The Poll</h2>
+        <div class="pollsel" id="pollsel" role="group" aria-label="Choose poll"></div>
+        <div class="sub" id="poll-sub">Loading rankings…</div>
+      </div>
+      <ol id="poll"></ol>
+      <div class="rv" id="rv" hidden></div>
+    </aside>
+  </div>
+
+  <section aria-labelledby="road-h" id="roadsec">
+    <div class="sec-h"><h2 id="road-h">Road to the Playoff</h2><span class="sub" id="road-sub">12-team College Football Playoff</span></div>
+    <div class="cfp-next" id="cfp-next" hidden></div>
+    <div class="road">
+      <div class="rcard" id="bracket"><div class="skel" style="border:0"></div></div>
+      <div class="rcard b12" id="b12"><div class="skel" style="border:0"></div></div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap small">
+  Scores, schedules and rankings come from ESPN's public college football feed and refresh every 30 seconds while games are live.
+  Kickoff times are shown in your local time zone. The projected playoff field applies the 2026 College Football Playoff rules (four Power 4 conference champions plus the top-ranked Group of 5 team get automatic bids; Notre Dame is in if ranked in the top 12; the four highest-ranked teams get byes) to the latest rankings, using current conference leaders as stand-ins for champions until title games are played. It's a projection, not the committee's bracket. Not affiliated with ESPN, the NCAA, the College Football Playoff, the Big 12, the University of Utah or BYU.
+</footer>
+
+<script>
+(() => {
+  "use strict";
+  const API = "https://site.api.espn.com/apis/site/v2/sports/football/college-football";
+  // Teams pinned to the spotlight. ESPN team ids: Utah 254, BYU 252.
+  const FAVS = [
+    { id: "254", abbr: "UTAH", key: "utah", name: "Utah Utes", short: "Utah" },
+    { id: "252", abbr: "BYU",  key: "byu",  name: "BYU Cougars", short: "BYU" }
+  ];
+  const favById = Object.fromEntries(FAVS.map(f => [f.id, f]));
+
+  const S = {
+    week: null,            // {type, week} or null for current
+    current: null,         // {type, week} reported by ESPN for the default call
+    calendar: [],
+    events: [],
+    polls: [],
+    pollKey: null,
+    filter: "all",
+    rrOnly: false,
+    auto: true,
+    sched: {},             // favId -> {at, last, next, record}
+    lastOk: null,
+    nextAt: null,
+    timer: null,
+    loading: false
+  };
+  try {
+    const saved = JSON.parse(localStorage.getItem("t25g") || "{}");
+    if (saved.filter) S.filter = saved.filter;
+    if (typeof saved.rrOnly === "boolean") S.rrOnly = saved.rrOnly;
+    if (typeof saved.auto === "boolean") S.auto = saved.auto;
+    // Only a poll the viewer actually clicked is remembered; cfpSeen marks that CFP was already offered.
+    if (saved.pollPick) S.pollPick = saved.pollPick;
+    if (saved.cfpSeen) S.cfpSeen = true;
+  } catch (e) {}
+  const save = () => { try { localStorage.setItem("t25g", JSON.stringify({ filter: S.filter, rrOnly: S.rrOnly, auto: S.auto, pollPick: S.pollPick || null, cfpSeen: !!S.cfpSeen })); } catch (e) {} };
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const fmtKick = new Intl.DateTimeFormat(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" });
+  const fmtDate = new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric" });
+  const fmtClock = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit", second: "2-digit" });
+  const BALL = '<svg class="ballico" viewBox="0 0 16 10" aria-label="Has the ball" role="img"><ellipse cx="8" cy="5" rx="7.5" ry="4.5" fill="currentColor"/><path d="M5 5h6M6.5 3.8v2.4M8 3.8v2.4M9.5 3.8v2.4" stroke="#fff" stroke-width="1"/></svg>';
+
+  async function getJSON(url, ms = 12000) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), ms);
+    try {
+      const r = await fetch(url, { signal: ctrl.signal, cache: "no-store" });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return await r.json();
+    } finally { clearTimeout(t); }
+  }
+
+  /* ---------- Normalizing ESPN shapes ---------- */
+  function scoreOf(x) {
+    const s = x.score;
+    if (s == null) return null;
+    if (typeof s === "object") return s.displayValue ?? (s.value != null ? String(s.value) : null);
+    return String(s);
+  }
+  function normTeam(x) {
+    const t = x.team || {};
+    const rank = x.curatedRank?.current ?? x.rank;
+    const recs = x.records || x.record || [];
+    const rec = (recs.find?.(r => r.type === "total" || r.name === "overall") || recs[0] || {});
+    return {
+      id: String(t.id ?? x.id ?? ""),
+      homeAway: x.homeAway,
+      abbr: t.abbreviation || "",
+      name: t.shortDisplayName || t.location || t.displayName || t.abbreviation || "TBD",
+      full: t.displayName || t.name || "",
+      logo: t.logo || t.logos?.[0]?.href || "",
+      score: scoreOf(x),
+      rank: rank && rank >= 1 && rank <= 25 ? rank : null,
+      record: rec.summary || rec.displayValue || "",
+      lines: (x.linescores || []).map(l => l.displayValue ?? l.value),
+      winner: x.winner === true
+    };
+  }
+  function norm(ev) {
+    const c = ev.competitions?.[0] || {};
+    const st = (c.status || ev.status || {});
+    const type = st.type || {};
+    const comps = (c.competitors || []).map(normTeam);
+    const away = comps.find(t => t.homeAway === "away") || comps[0] || normTeam({});
+    const home = comps.find(t => t.homeAway === "home") || comps[1] || normTeam({});
+    const bc = c.broadcasts?.[0]?.names?.join(" / ") || c.broadcast || c.geoBroadcasts?.[0]?.media?.shortName || "";
+    const addr = c.venue?.address || {};
+    const link = (ev.links || []).find(l => (l.rel || []).includes("summary") || (l.rel || []).includes("gamecast"))?.href
+      || `https://www.espn.com/college-football/game/_/gameId/${ev.id}`;
+    return {
+      id: String(ev.id),
+      date: new Date(ev.date),
+      tbd: ev.timeValid === false || /TBD/i.test(type.shortDetail || ""),
+      state: type.state || "pre",
+      detail: type.shortDetail || type.detail || "",
+      longDetail: type.detail || "",
+      period: st.period || 0,
+      away, home,
+      sit: c.situation || null,
+      tv: bc,
+      venue: c.venue?.fullName || "",
+      city: [addr.city, addr.state].filter(Boolean).join(", "),
+      neutral: !!c.neutralSite,
+      note: c.notes?.[0]?.headline || "",
+      link
+    };
+  }
+  const isFav = t => !!favById[t.id] || FAVS.some(f => f.abbr === t.abbr);
+  const favOf = t => favById[t.id] || FAVS.find(f => f.abbr === t.abbr) || null;
+  const bestRank = g => Math.min(g.away.rank || 99, g.home.rank || 99);
+  const hasFav = g => isFav(g.away) || isFav(g.home);
+  const ranked = g => g.away.rank || g.home.rank || hasFav(g);
+  const rr = g => g.away.rank && g.home.rank;
+
+  function upset(g) {
+    if (g.state === "pre") return null;
+    const a = +g.away.score, h = +g.home.score;
+    if (isNaN(a) || isNaN(h) || a === h) return null;
+    const lead = a > h ? g.away : g.home, trail = a > h ? g.home : g.away;
+    if (!trail.rank) return null;
+    if (lead.rank && lead.rank < trail.rank) return null;
+    return g.state === "post" ? "Upset" : "Upset watch";
+  }
+
+  function statusPill(g) {
+    if (g.state === "in") return `<span class="pill live">${esc(g.detail || "Live")}</span>`;
+    if (g.state === "post") return `<span class="pill final">${esc(g.detail || "Final")}</span>`;
+    if (/postponed|canceled|cancelled|delayed/i.test(g.detail)) return `<span class="pill">${esc(g.detail)}</span>`;
+    return `<span class="pill">${esc(g.tbd ? fmtDate.format(g.date) + " · TBD" : fmtKick.format(g.date))}</span>`;
+  }
+
+  /* ---------- Field position from the down-and-distance text ---------- */
+  function fieldPos(g) {
+    const s = g.sit;
+    if (!s || g.state !== "in") return null;
+    const txt = s.downDistanceText || s.shortDownDistanceText || "";
+    const posTxt = s.possessionText || "";
+    let m = txt.match(/at\s+([A-Z&]{2,6})\s+(\d{1,2})\b/) || posTxt.match(/^([A-Z&]{2,6})\s+(\d{1,2})$/);
+    let x = null;
+    if (m) {
+      const side = m[1], yd = +m[2];
+      if (side === g.away.abbr) x = yd; else if (side === g.home.abbr) x = 100 - yd;
+    } else if (/at\s+50\b/.test(txt) || /^50$/.test(posTxt)) x = 50;
+    if (x == null && typeof s.yardLine === "number") return null;
+    if (x == null) return null;
+    const poss = s.possession ? String(s.possession) : null;
+    const dir = poss === g.away.id ? 1 : poss === g.home.id ? -1 : 0;
+    const dist = (txt.match(/&\s*(\d+|Goal)/i) || [])[1];
+    const toGo = dist && /goal/i.test(dist) ? (dir === 1 ? 100 - x : x) : +dist || 0;
+    return { x, dir, toGo, txt, red: !!s.isRedZone };
+  }
+  function fieldBar(g) {
+    const f = fieldPos(g);
+    if (!f) return "";
+    const left = f.x, arrowFrom = f.dir === -1 ? Math.max(0, f.x - f.toGo) : f.x;
+    const arrowW = f.dir ? Math.min(f.toGo, f.dir === 1 ? 100 - f.x : f.x) : 0;
+    const rz = f.dir === 1 ? `<div class="rz" style="left:80%;right:0"></div>` : f.dir === -1 ? `<div class="rz" style="left:0;width:20%"></div>` : "";
+    return `<div>
+      <div class="fieldbar" role="img" aria-label="Ball on the field: ${esc(f.txt)}">
+        <div class="ez" style="background:${'var(--surface-2)'};color:var(--ink-2)">${esc(g.away.abbr)}</div>
+        <div class="play-area">${f.red ? rz : ""}
+          ${arrowW ? `<div class="arrow" style="left:${arrowFrom}%;width:${arrowW}%"></div>` : ""}
+          <div class="ball" style="left:${left}%"></div>
+        </div>
+        <div class="ez r" style="background:${'var(--surface-2)'};color:var(--ink-2)">${esc(g.home.abbr)}</div>
+      </div>
+      <div class="fieldcap"><span>${esc(f.txt)}</span>${f.red ? '<span class="rzt">Red zone</span>' : ""}</div>
+    </div>`;
+  }
+
+  /* ---------- Game card ---------- */
+  function teamRow(g, t, other) {
+    const fav = favOf(t);
+    const lose = g.state === "post" && other.winner && !t.winner;
+    const poss = g.state === "in" && g.sit?.possession && String(g.sit.possession) === t.id;
+    const sc = g.state === "pre" ? "" : esc(t.score ?? "");
+    return `<div class="trow${lose ? " lose" : ""}${fav ? " fav-" + fav.key : ""}">
+      <span class="rk">${t.rank || ""}</span>
+      ${t.logo ? `<img src="${esc(t.logo)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : "<span></span>"}
+      <span class="tn" title="${esc(t.full)}">${esc(t.name)}<small>${esc(t.record)}</small></span>
+      <span class="sc">${poss ? BALL : ""}${sc}</span>
+    </div>`;
+  }
+  function gameCard(g) {
+    const favKeys = [g.away, g.home].map(favOf).filter(Boolean).map(f => f.key);
+    const up = upset(g);
+    const rnd = cfpRound(g);
+    const chips = [rnd ? `<span class="chip cfp">CFP · ${rnd}</span>` : "", rr(g) && !rnd ? '<span class="chip rr">Ranked vs. ranked</span>' : "", up ? `<span class="chip">${up}</span>` : ""].join("");
+    const dd = g.state === "in" ? (g.sit?.downDistanceText || g.sit?.shortDownDistanceText || "") : "";
+    const where = g.note || (g.venue ? g.venue : "");
+    return `<article class="game${g.state === "in" ? " live" : ""} ${favKeys.join(" ")}">
+      <div class="g-top">${statusPill(g)}<span>${chips}</span><span class="tv">${esc(g.tv)}</span></div>
+      ${teamRow(g, g.away, g.home)}
+      ${teamRow(g, g.home, g.away)}
+      <div class="g-foot">
+        ${dd ? `<span class="dd${g.sit?.isRedZone ? " rz" : ""}">${esc(dd)}</span>` : `<span>${esc(where)}</span>`}
+        <a class="gc" href="${esc(g.link)}" target="_blank" rel="noopener">Gamecast</a>
+      </div>
+    </article>`;
+  }
+
+  /* ---------- Spotlight ---------- */
+  function bugRow(g, t, other, favCls) {
+    const fav = favOf(t);
+    const lose = g.state === "post" && other.winner && !t.winner;
+    const poss = g.state === "in" && g.sit?.possession && String(g.sit.possession) === t.id;
+    const extra = fav ? (fav.key === "utah" ? " u" : " b") : "";
+    return `<div class="bug-row${fav ? " fav" + extra : ""}${lose ? " lose" : ""}">
+      ${t.logo ? `<img src="${esc(t.logo)}" alt="" onerror="this.style.visibility='hidden'">` : "<span></span>"}
+      <div class="tn">${t.rank ? `<span class="rk">#${t.rank}</span>` : ""}${esc(t.full || t.name)}<small>${esc(t.record)}${t.homeAway === "home" && !g.neutral ? " · Home" : ""}</small></div>
+      <div class="big">${poss ? BALL : ""}${g.state === "pre" ? "" : esc(t.score ?? "0")}</div>
+    </div>`;
+  }
+  function lineTable(g) {
+    if (g.state === "pre") return "";
+    const n = Math.max(4, g.away.lines.length, g.home.lines.length);
+    if (!g.away.lines.length && !g.home.lines.length) return "";
+    const hd = Array.from({ length: n }, (_, i) => `<th>${i < 4 ? i + 1 : (n - 4 > 1 ? i - 3 + "OT" : "OT")}</th>`).join("");
+    const row = t => `<tr><td>${esc(t.abbr || t.name)}</td>${Array.from({ length: n }, (_, i) => `<td>${t.lines[i] ?? (i < g.period ? "0" : "–")}</td>`).join("")}<td class="t">${esc(t.score ?? "")}</td></tr>`;
+    return `<div class="lines"><table><thead><tr><th>Team</th>${hd}<th>T</th></tr></thead><tbody>${row(g.away)}${row(g.home)}</tbody></table></div>`;
+  }
+  function spotGame(g) {
+    const lp = g.state === "in" && g.sit?.lastPlay?.text ? `<div class="play"><b>Last play</b>${esc(g.sit.lastPlay.text)}</div>` : "";
+    const up = upset(g);
+    return `<div class="spot-status">${statusPill(g)}${g.tv ? `<span>${esc(g.tv)}</span>` : ""}${up ? `<span class="chip">${up}</span>` : ""}${g.note ? `<span>${esc(g.note)}</span>` : ""}</div>
+      <div class="bug">${bugRow(g, g.away, g.home)}${bugRow(g, g.home, g.away)}</div>
+      ${fieldBar(g)}
+      ${lineTable(g)}
+      ${lp}
+      <div class="spot-foot"><span>${esc([g.venue, g.city].filter(Boolean).join(" · "))}</span><a class="gc" href="${esc(g.link)}" target="_blank" rel="noopener">Open Gamecast</a></div>`;
+  }
+  function describeSched(fav, g) {
+    if (!g) return "—";
+    const me = g.away.id === fav.id || favOf(g.away) === fav ? g.away : g.home;
+    const opp = me === g.away ? g.home : g.away;
+    const vs = me.homeAway === "home" && !g.neutral ? "vs" : g.neutral ? "vs" : "at";
+    const oppTxt = `${vs} ${opp.rank ? "#" + opp.rank + " " : ""}${opp.name}`;
+    if (g.state === "post") {
+      const res = me.winner ? "W" : opp.winner ? "L" : "";
+      return `<strong>${res} ${esc(me.score)}–${esc(opp.score)}</strong> ${esc(oppTxt)} <span style="color:var(--ink-3)">· ${fmtDate.format(g.date)}</span>`;
+    }
+    return `${esc(oppTxt)} <span style="color:var(--ink-3)">· ${g.tbd ? fmtDate.format(g.date) + ", time TBD" : fmtDate.format(g.date) + ", " + new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(g.date)}${g.tv ? " · " + esc(g.tv) : ""}</span>`;
+  }
+  function favMeta(fav, g) {
+    const pollRank = currentPoll()?.ranks?.find(r => String(r.team?.id) === fav.id);
+    let rec = "", rk = "";
+    if (g) { const me = favOf(g.away) === fav ? g.away : g.home; rec = me.record; rk = me.rank ? "#" + me.rank : ""; }
+    if (!rec) rec = S.sched[fav.id]?.record || pollRank?.recordSummary || "";
+    if (!rk && pollRank) rk = "#" + pollRank.current;
+    const poll = currentPoll();
+    return [rk ? `${rk} ${poll?.shortName || "AP"}` : "Unranked", rec].filter(Boolean).join(" · ");
+  }
+  function renderSpots() {
+    const el = $("spots");
+    const found = FAVS.map(f => S.events.find(g => favOf(g.away) === f || favOf(g.home) === f) || null);
+    let html = "";
+    if (found[0] && found[1] && found[0].id === found[1].id) {
+      const g = found[0];
+      html = `<section class="spot both">
+        <div class="spot-band"><span class="nm">The Holy War</span><span class="tag">Utah ${esc(favMeta(FAVS[0], g))} &nbsp;|&nbsp; BYU ${esc(favMeta(FAVS[1], g))}</span></div>
+        <div class="spot-body">${spotGame(g)}</div></section>`;
+    } else {
+      html = FAVS.map((f, i) => {
+        const g = found[i];
+        let body;
+        if (g) body = spotGame(g);
+        else {
+          const sc = S.sched[f.id];
+          body = `<div class="spot-status"><span class="pill">Open date</span><span>No game in the selected week</span></div>
+            <div class="offweek">
+              <div class="ln"><b>Last</b><span>${sc && !sc.pending ? describeSched(f, sc.last) : "Loading…"}</span></div>
+              <div class="ln"><b>Next</b><span>${sc && !sc.pending ? describeSched(f, sc.next) : "Loading…"}</span></div>
+            </div>
+            <div class="spot-foot"><span></span><a class="gc" href="https://www.espn.com/college-football/team/schedule/_/id/${f.id}" target="_blank" rel="noopener">Full schedule</a></div>`;
+          ensureSched(f);
+        }
+        return `<section class="spot ${f.key}">
+          <div class="spot-band"><span class="nm">${esc(f.name)}</span><span class="tag">${esc(favMeta(f, g))}</span></div>
+          <div class="spot-body">${body}</div></section>`;
+      }).join("");
+    }
+    el.innerHTML = html;
+  }
+
+  async function ensureSched(f, force) {
+    const cur = S.sched[f.id];
+    if (cur && !force && Date.now() - cur.at < 10 * 60 * 1000) return;
+    if (cur?.pending) return;
+    S.sched[f.id] = Object.assign(cur || {}, { pending: true, at: cur?.at || 0 });
+    try {
+      const d = await getJSON(`${API}/teams/${f.id}/schedule`);
+      const evs = (d.events || []).map(norm).sort((a, b) => a.date - b.date);
+      const now = Date.now();
+      const last = [...evs].reverse().find(g => g.state === "post") || null;
+      const next = evs.find(g => g.state !== "post" && g.date.getTime() > now - 6 * 3600e3) || null;
+      S.sched[f.id] = { at: Date.now(), last, next, events: evs, record: d.team?.recordSummary || "" };
+    } catch (e) {
+      S.sched[f.id] = { at: Date.now() - 9 * 60 * 1000, last: null, next: null, record: "" };
+    }
+    renderSpots();
+    renderB12();
+  }
+
+  /* ---------- Games grid ---------- */
+  function sorted(list) {
+    const order = { in: 0, pre: 1, post: 2 };
+    return list.slice().sort((a, b) => {
+      const fa = hasFav(a) ? 0 : 1, fb = hasFav(b) ? 0 : 1;
+      if (order[a.state] !== order[b.state]) return (order[a.state] ?? 3) - (order[b.state] ?? 3);
+      if (fa !== fb) return fa - fb;
+      if (a.state === "pre") return (a.date - b.date) || (bestRank(a) - bestRank(b));
+      return bestRank(a) - bestRank(b);
+    });
+  }
+  const isPost = () => String((S.week || S.current)?.type) === "3";
+  function renderGames() {
+    const post = isPost();
+    $("games-h").textContent = post ? "Bowl games" : "Ranked games";
+    const base = (post ? S.events : S.events.filter(ranked)).filter(g => !S.rrOnly || rr(g));
+    const counts = { all: base.length, in: 0, pre: 0, post: 0, upset: 0 };
+    base.forEach(g => { counts[g.state] = (counts[g.state] || 0) + 1; if (upset(g)) counts.upset++; });
+    ["all", "in", "pre", "post", "upset"].forEach(k => $("c-" + k).textContent = counts[k] || 0);
+    document.querySelectorAll(".tab[data-f]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.f === S.filter)));
+    $("rr").checked = S.rrOnly;
+    const list = sorted(base.filter(g => S.filter === "all" || (S.filter === "upset" ? !!upset(g) : g.state === S.filter)));
+    const sub = S.events.length ? (post ? `${S.events.length} postseason games` : `${S.events.filter(ranked).length} games with a ranked team, Utah or BYU`) : "";
+    $("games-sub").textContent = sub;
+    $("games").innerHTML = list.length ? list.map(gameCard).join("")
+      : `<div class="empty" style="grid-column:1/-1">${S.events.length ? (S.filter === "in" ? "No ranked games are in progress right now." : S.filter === "upset" ? "No upsets or upset scares in the selected week so far." : "No games match this filter.") : "Waiting for the scoreboard…"}</div>`;
+  }
+
+  /* ---------- Poll ---------- */
+  function currentPoll() {
+    if (!S.polls.length) return null;
+    return S.polls.find(p => p.key === S.pollKey) || S.polls[0];
+  }
+  function weekStatus(teamId) {
+    const g = S.events.find(e => e.away.id === teamId || e.home.id === teamId);
+    if (!g) return { cls: "", txt: "Open date" };
+    const me = g.away.id === teamId ? g.away : g.home, opp = me === g.away ? g.home : g.away;
+    const pre = me.homeAway === "home" && !g.neutral ? "vs" : g.neutral ? "vs" : "at";
+    if (g.state === "post") {
+      const w = me.winner, l = opp.winner;
+      return { cls: w ? "w" : l ? "l" : "", txt: `${w ? "W" : l ? "L" : "T"} ${me.score}–${opp.score} ${pre} ${opp.abbr}` };
+    }
+    if (g.state === "in") return { cls: "lv", txt: `${me.score}–${opp.score} ${pre} ${opp.abbr} · ${g.detail}` };
+    return { cls: "", txt: `${pre} ${opp.abbr} · ${g.tbd ? "TBD" : fmtKick.format(g.date)}` };
+  }
+  function renderPoll() {
+    const p = currentPoll();
+    $("pollsel").innerHTML = S.polls.length > 1 ? S.polls.map(x => `<button class="tab" type="button" data-poll="${esc(x.key)}" aria-pressed="${x === p}">${esc(x.shortName)}</button>`).join("") : "";
+    if (!p) { $("poll-sub").textContent = "Rankings unavailable right now."; $("poll").innerHTML = ""; $("rv").hidden = true; return; }
+    const sel = S.week || S.current;
+    const latestWk = pollWeek(S.latestPolls || []);
+    const newer = sel && sel.type === "2" && latestWk && p.week && +latestWk > +p.week;
+    $("poll-sub").innerHTML = `${esc(p.headline || p.name)}${p.week && sel?.type === "2" && !S.pollNote ? ` · <span style="color:var(--ink-2)">the rankings going into these games</span>` : ""}${S.pollNote ? `<br><span style="color:var(--live)">${esc(S.pollNote)}</span>` : ""}${newer && !S.pollNote ? `<br>Newer poll out: Week ${esc(latestWk)}. Use Next › to see it with that week's games.` : ""}`;
+    $("poll").innerHTML = (p.ranks || []).slice(0, 25).map(r => {
+      const t = r.team || {};
+      const id = String(t.id);
+      const fav = favById[id];
+      const tr = String(r.trend ?? "-");
+      const trCls = tr.startsWith("+") ? "up" : tr.startsWith("-") && tr !== "-" ? "dn" : "";
+      const trTxt = tr.startsWith("+") ? "▲" + tr.slice(1) : tr !== "-" && tr.startsWith("-") ? "▼" + tr.slice(1) : "—";
+      const ws = weekStatus(id);
+      const logo = t.logo || t.logos?.[0]?.href || "";
+      const nm = t.nickname || t.location || t.shortDisplayName || t.name || t.abbreviation;
+      return `<li class="${fav ? fav.key : ""}">
+        <span class="pr">${r.current}</span>
+        <span class="tr ${trCls}" title="Previous: ${esc(r.previous || "NR")}">${trTxt}</span>
+        ${logo ? `<img src="${esc(logo)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : "<span></span>"}
+        <span class="pt" title="${esc(r.firstPlaceVotes ? r.firstPlaceVotes + " first-place votes" : "")}">${esc(nm)}<small>${esc(r.recordSummary || "")}</small></span>
+        <span class="ws ${ws.cls}">${esc(ws.txt)}</span>
+      </li>`;
+    }).join("");
+    const inPoll = new Set((p.ranks || []).map(r => String(r.team?.id)));
+    const others = (p.others || []);
+    const favNotes = FAVS.filter(f => !inPoll.has(f.id)).map(f => {
+      const o = others.find(x => String(x.team?.id) === f.id);
+      return o ? `${f.short}: receiving votes (${o.points} pts)` : `${f.short}: unranked`;
+    });
+    $("rv").hidden = !favNotes.length;
+    $("rv").innerHTML = favNotes.length ? `<b>Outside the Top 25</b>${favNotes.map(esc).join("<br>")}` : "";
+  }
+
+  /* ---------- Road to the Playoff ---------- */
+  const STANDINGS = "https://site.api.espn.com/apis/v2/sports/football/college-football/standings?group=80";
+  const P4 = [["ACC", /atlantic coast|^acc$/i], ["Big Ten", /big ten/i], ["Big 12", /big 12/i], ["SEC", /southeastern|^sec$/i]];
+  const G5 = /american|conference usa|c-usa|mid-american|^mac$|mountain west|pac-12|pac 12|sun belt/i;
+  const ND = "87";
+  // CFP ranking releases for the 2026 season (Eastern time). First and final dates are announced;
+  // the weekly Tuesday releases in between follow the usual pattern.
+  const CFP_DATES = [
+    ["2026-11-04T00:00:00Z", "First CFP rankings", true], ["2026-11-11T00:00:00Z", "CFP rankings", false],
+    ["2026-11-18T00:00:00Z", "CFP rankings", false], ["2026-11-25T00:00:00Z", "CFP rankings", false],
+    ["2026-12-02T00:00:00Z", "CFP rankings", false], ["2026-12-06T17:00:00Z", "Selection Day · final rankings and bracket", true]
+  ].map(([d, l, firm]) => ({ t: new Date(d), label: l, firm }));
+  const B12_TITLE = "Big 12 Championship · Fri, Dec. 4 · AT&T Stadium, Arlington · top two in the conference standings";
+
+  function cfpRound(g) {
+    const n = g.note || "";
+    if (!/playoff|cfp/i.test(n)) return "";
+    if (/first round/i.test(n)) return "First Round";
+    if (/quarter/i.test(n)) return "Quarterfinal";
+    if (/semi/i.test(n)) return "Semifinal";
+    if (/championship/i.test(n)) return "National Championship";
+    return "Playoff";
+  }
+
+  function parseConfs(d) {
+    const confs = [];
+    const walk = (node, conf) => {
+      const isConf = node.isConference || (!conf && node.standings);
+      const c = isConf ? { id: String(node.id), name: node.name || "", abbr: node.abbreviation || node.shortName || "", teams: [] } : conf;
+      if (isConf) confs.push(c);
+      for (const e of node.standings?.entries || []) {
+        const st = e.stats || [];
+        const recOf = test => { const x = st.find(test); const v = x && (x.summary || x.displayValue); return v && /^\d+-\d+(-\d+)?$/.test(v) ? v : ""; };
+        const confRec = recOf(x => (x.type || "").toLowerCase() === "vsconf" || /vs\.?\s*conf/i.test(x.name || "") || /vs\.?\s*conf/i.test(x.displayName || ""));
+        const overall = recOf(x => (x.type || "").toLowerCase() === "total" || (x.name || "").toLowerCase() === "overall");
+        const [cw, cl] = (confRec || "0-0").split("-").map(Number);
+        const t = e.team || {};
+        c && c.teams.push({ id: String(t.id), name: t.shortDisplayName || t.location || t.displayName, full: t.displayName, abbr: t.abbreviation, logo: t.logos?.[0]?.href || "", confRec, overall, cw, cl, cpct: cw + cl ? cw / (cw + cl) : 0, order: c.teams.length });
+      }
+      (node.children || []).forEach(ch => walk(ch, isConf ? c : conf));
+    };
+    walk(d, null);
+    // Merge any division-level nodes back into their conference, keep standings order.
+    return confs.filter(c => c.teams.length);
+  }
+  async function loadConfs(force) {
+    // The conference standings file is large (~2.5 MB) and only changes when games finish,
+    // so refresh it every 20 minutes while games are live and hourly otherwise.
+    const ttl = S.events.some(g => g.state === "in") ? 20 * 60e3 : 60 * 60e3;
+    if (!force && S.confs && Date.now() - S.confsAt < ttl) return;
+    try { S.confs = parseConfs(await getJSON(STANDINGS, 20000)); S.confsAt = Date.now(); }
+    catch (e) { if (!S.confs) S.confs = null; S.confsAt = Date.now() - ttl + 5 * 60e3; }
+    renderRoad();
+  }
+  const confOfTeam = id => (S.confs || []).find(c => c.teams.some(t => t.id === id));
+  const leaderOf = c => c.teams.slice().sort((a, b) => b.cpct - a.cpct || (b.cw - a.cw) || a.order - b.order)[0];
+  const teamInfo = id => { for (const c of S.confs || []) { const t = c.teams.find(x => x.id === id); if (t) return t; } return null; };
+
+  function rankingSource() {
+    const L = S.latestPolls && S.latestPolls.length ? S.latestPolls : S.polls;
+    const cfp = L.find(p => /cfp|playoff/i.test(p.key + p.name));
+    const ap = L.find(p => /^ap$/i.test(p.key) || /AP/.test(p.name));
+    return cfp ? { poll: cfp, isCfp: true } : ap ? { poll: ap, isCfp: false } : null;
+  }
+
+  function project() {
+    const src = rankingSource();
+    if (!src || !S.confs) return null;
+    const ranks = (src.poll.ranks || []).map(r => ({ id: String(r.team?.id), rank: r.current, team: r.team, rec: r.recordSummary }));
+    const rankOf = id => ranks.find(r => r.id === id)?.rank ?? null;
+    const auto = [];
+    for (const [label, re] of P4) {
+      const c = S.confs.find(x => re.test(x.name) || re.test(x.abbr));
+      if (!c) continue;
+      const l = leaderOf(c);
+      auto.push({ id: l.id, why: `${label} champion*`, conf: label });
+    }
+    const g5ids = new Set((S.confs || []).filter(c => G5.test(c.name) || G5.test(c.abbr)).flatMap(c => c.teams.map(t => t.id)));
+    let g5 = ranks.find(r => g5ids.has(r.id));
+    if (g5) auto.push({ id: g5.id, why: "Top-ranked Group of 5", conf: confOfTeam(g5.id)?.abbr || "" });
+    else {
+      const others = (src.poll.others || []).map(o => String(o.team?.id));
+      const oid = others.find(id => g5ids.has(id));
+      if (oid) auto.push({ id: oid, why: "Top Group of 5 (receiving votes)", conf: confOfTeam(oid)?.abbr || "" });
+    }
+    if ((rankOf(ND) ?? 99) <= 12) auto.push({ id: ND, why: "Notre Dame (top 12)", conf: "Independent" });
+    const field = [];
+    for (const a of auto) if (!field.some(f => f.id === a.id)) field.push(a);
+    for (const r of ranks) { if (field.length >= 12) break; if (!field.some(f => f.id === r.id)) field.push({ id: r.id, why: "At-large" }); }
+    // If automatic bids pushed the field past 12, drop the lowest-ranked at-large teams.
+    while (field.length > 12) {
+      const idx = field.map((f, i) => [f, i]).filter(([f]) => f.why === "At-large").sort((a, b) => (rankOf(b[0].id) ?? 99) - (rankOf(a[0].id) ?? 99))[0]?.[1];
+      if (idx == null) break; field.splice(idx, 1);
+    }
+    field.forEach(f => { f.rank = rankOf(f.id); const r = ranks.find(x => x.id === f.id); const ti = teamInfo(f.id);
+      f.name = r?.team?.nickname || r?.team?.location || ti?.name || "TBD"; f.logo = r?.team?.logos?.[0]?.href || r?.team?.logo || ti?.logo || ""; f.rec = r?.rec || ti?.overall || ""; });
+    field.sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99));
+    field.forEach((f, i) => f.seed = i + 1);
+    const out = ranks.filter(r => !field.some(f => f.id === r.id)).slice(0, 4).map(r => ({ id: r.id, rank: r.rank, name: r.team?.nickname || r.team?.location, logo: r.team?.logos?.[0]?.href || r.team?.logo || "", rec: r.rec }));
+    return { field, out, src, rankOf };
+  }
+
+  function bt(f, extra = "", note = "") {
+    const fav = favById[f.id];
+    return `<div class="bt ${fav ? fav.key : ""} ${extra}"><span class="sd">${f.seed ?? (f.rank ? "#" + f.rank : "")}</span>${f.logo ? `<img src="${esc(f.logo)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : "<span></span>"}<span class="nm">${esc(f.name)}<small>${f.rank ? "#" + f.rank : "NR"}${note ? " · " + esc(note) : f.rec ? " · " + esc(f.rec) : ""}</small></span></div>`;
+  }
+
+  function favPathLine(f, P, b12) {
+    const inF = P.field.find(x => x.id === f.id);
+    const rk = P.rankOf(f.id);
+    const me = b12?.teams.find(t => t.id === f.id);
+    const pos = me ? b12.sorted.indexOf(me) + 1 : null;
+    const second = b12?.sorted[1];
+    const parts = [];
+    if (inF) {
+      const how = inF.why.startsWith("Big 12") ? "as the projected Big 12 champion" : inF.why === "At-large" ? "as an at-large team" : "via " + inF.why.toLowerCase();
+      parts.push(`<b>${f.short}: in the field</b> ${how}, <b>#${inF.seed} seed</b>${inF.seed <= 4 ? " with a first-round bye" : ""}.`);
+    } else {
+      const fo = P.out.findIndex(o => o.id === f.id);
+      parts.push(`<b>${f.short}: ${fo >= 0 ? ["first", "second", "third", "fourth"][fo] + " team out" : rk ? `#${rk}, outside the field` : "unranked, outside the field"}.</b>`);
+    }
+    if (me) {
+      const ord = pos ? `${pos}${["st", "nd", "rd"][pos - 1] || "th"}` : "";
+      let line = `${me.confRec || "0-0"} in the Big 12${ord ? `, ${ord} in the standings` : ""}`;
+      if (!inF || !inF.why.startsWith("Big 12")) {
+        if (pos && pos <= 2) line += "; in position for the Big 12 title game, and winning it brings an automatic bid";
+        else if (second) { const g = ((me.cl - second.cl) + (second.cw - me.cw)) / 2; line += `; ${g > 0 ? fmtG(g) + " game" + (g === 1 ? "" : "s") + " behind" : "tied with"} ${esc(second.name)} for a title-game spot, the surest path in`; }
+      }
+      parts.push(line + ".");
+    }
+    return parts.join(" ");
+  }
+  const fmtG = g => g % 1 ? g.toFixed(1) : String(g);
+
+  function b12Data() {
+    const c = (S.confs || []).find(x => /big 12/i.test(x.name) || /big 12/i.test(x.abbr));
+    if (!c) return null;
+    const sorted = c.teams.slice().sort((a, b) => b.cpct - a.cpct || (b.cw - a.cw) || a.order - b.order);
+    return { conf: c, teams: c.teams, sorted };
+  }
+
+  function renderBracket() {
+    const el = $("bracket");
+    // Live bracket once playoff games exist
+    const cfpGames = (S.post || []).filter(g => cfpRound(g));
+    if (cfpGames.length) {
+      const order = ["First Round", "Quarterfinal", "Semifinal", "National Championship"];
+      const by = order.map(r => [r, cfpGames.filter(g => cfpRound(g) === r).sort((a, b) => a.date - b.date)]).filter(x => x[1].length);
+      el.innerHTML = `<div class="rcard-h"><h3>Playoff bracket</h3><span class="sub">Live results as games are played</span></div>
+        <div class="rounds">${by.map(([r, gs]) => `<div><h4>${r}</h4><div class="games">${gs.map(gameCard).join("")}</div></div>`).join("")}</div>`;
+      return;
+    }
+    const P = project();
+    if (!P) { el.innerHTML = `<div class="rcard-h"><h3>Projected playoff field</h3><span class="sub">${S.confs === null ? "Conference standings didn't load; trying again shortly." : "Waiting for rankings and conference standings…"}</span></div>`; return; }
+    const b12 = b12Data();
+    const seed = n => P.field.find(f => f.seed === n);
+    const host = (a, b) => a && b ? `<div class="host">First round at ${esc(a.name)}</div>` : "";
+    const quad = (top, a, b) => `<div class="quad"><div>${top ? bt(top, "bye") : ""}</div><div class="fr"><div class="vs">Winner of</div>${a ? bt(a) : ""}${b ? bt(b) : ""}${host(a, b)}</div></div>`;
+    const autos = P.field.filter(f => f.why !== "At-large");
+    el.innerHTML = `<div class="rcard-h"><h3>Projected playoff field</h3>
+        <span class="sub">${P.src.isCfp ? `Built from the latest CFP rankings` : `Built from the AP poll until the first CFP rankings come out`} · *conference leaders stand in for champions until title games are played</span></div>
+      <div class="favpath">${FAVS.map(f => `<div class="${f.key}">${favPathLine(f, P, b12)}</div>`).join("")}</div>
+      <div class="semi">Semifinal side A</div>
+      ${quad(seed(1), seed(8), seed(9))}${quad(seed(4), seed(5), seed(12))}
+      <div class="semi">Semifinal side B</div>
+      ${quad(seed(2), seed(7), seed(10))}${quad(seed(3), seed(6), seed(11))}
+      <div class="semi">Automatic bids</div>
+      <div class="outs">${autos.map(f => bt(f, "", f.why)).join("")}</div>
+      <div class="semi">First four out</div>
+      <div class="outs">${P.out.map(o => bt({ ...o, seed: null })).join("") || '<span class="rnote" style="padding:0">—</span>'}</div>
+      <div class="rnote">First round Dec. 18–19 at the higher seed. Quarterfinals: Fiesta (Dec. 30), Cotton, Rose and Peach (Jan. 1); the committee assigns bowls on Selection Day. Semifinals: Orange (Jan. 14) and Sugar (Jan. 15). National championship: Jan. 25 in Las Vegas.</div>`;
+  }
+
+  function renderB12() {
+    const el = $("b12");
+    const d = b12Data();
+    if (!d) { el.innerHTML = `<div class="rcard-h"><h3>Big 12 race</h3><span class="sub">${S.confs === null ? "Conference standings didn't load; trying again shortly." : "Loading conference standings…"}</span></div>`; return; }
+    const src = rankingSource();
+    const rk = id => src?.poll.ranks?.find(r => String(r.team?.id) === id)?.current;
+    const second = d.sorted[1];
+    const rows = d.sorted.map((t, i) => {
+      const fav = favById[t.id];
+      const gb = i < 2 ? "—" : (() => { const g = ((t.cl - second.cl) + (second.cw - t.cw)) / 2; return g <= 0 ? "Tied" : fmtG(g); })();
+      return `${i === 2 ? `<tr><td colspan="4" class="tline">Title game line</td></tr>` : ""}<tr class="${fav ? fav.key : ""}">
+        <td><span class="rk">${rk(t.id) ? rk(t.id) : ""}</span>${t.logo ? `<img src="${esc(t.logo)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : ""}${esc(t.name)}</td>
+        <td>${esc(t.confRec || "0-0")}</td><td>${esc(t.overall || "–")}</td><td>${gb}</td></tr>`;
+    }).join("");
+    const ids = new Set(d.teams.map(t => t.id));
+    const remain = FAVS.map(f => {
+      const sc = S.sched[f.id];
+      if (!sc?.events) { ensureSched(f); return `<div><h4 class="${f.key}">${f.short}</h4><p class="rnote" style="padding:0">Loading schedule…</p></div>`; }
+      const left = sc.events.filter(g => g.state !== "post" && [g.away, g.home].some(t => t.id !== f.id && ids.has(t.id)));
+      return `<div><h4 class="${f.key}">${f.short} · ${left.length} Big 12 game${left.length === 1 ? "" : "s"} left</h4><ul>${left.map(g => {
+        const home = g.home.id === f.id; const opp = home ? g.away : g.home; const ot = d.teams.find(t => t.id === opp.id);
+        const hw = FAVS.some(x => x.id === opp.id);
+        return `<li class="${hw ? "hw" : ""}"><span>${home ? "vs" : "at"} ${esc(ot?.name || opp.name)}${ot?.confRec ? ` (${esc(ot.confRec)})` : ""}${hw ? " · Holy War" : ""}</span><span>${fmtDate.format(g.date)}</span></li>`;
+      }).join("") || "<li><span>Big 12 schedule complete</span><span></span></li>"}</ul></div>`;
+    }).join("");
+    el.innerHTML = `<div class="rcard-h"><h3>Big 12 race</h3><span class="sub">${esc(B12_TITLE)}. The champion gets an automatic playoff bid.</span></div>
+      <table><thead><tr><th>Team</th><th>Big 12</th><th>Overall</th><th>GB of #2</th></tr></thead><tbody>${rows}</tbody></table>
+      <div class="remain">${remain}</div>
+      <div class="rnote">Order follows ESPN's conference standings; the Big 12's tiebreakers start with head-to-head, then record against common opponents.</div>`;
+  }
+
+  function renderCfpNext() {
+    const el = $("cfp-next");
+    const now = Date.now();
+    const nxt = CFP_DATES.find(d => d.t.getTime() > now - 2 * 3600e3);
+    if (!nxt || (S.seasonYear && S.seasonYear !== 2026)) { el.hidden = true; return; }
+    const days = Math.ceil((nxt.t.getTime() - now) / 86400e3);
+    const when = new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(nxt.t);
+    el.hidden = false;
+    el.innerHTML = `<b>${esc(nxt.label)}</b><span>${esc(when)}${nxt.firm ? "" : " (expected)"}</span><span>${nxt.t.getTime() <= now ? "Out now" : days <= 1 ? "Within a day" : `In ${days} days`}</span>`;
+  }
+
+  async function loadPost() {
+    // Pull the full postseason slate once bowl season is near, so the live bracket can fill in.
+    const now = new Date();
+    if (!(String(S.current?.type) === "3" || now >= new Date("2026-12-06T17:00:00Z"))) return;
+    if (S.postAt && Date.now() - S.postAt < (S.post?.some(g => g.state === "in") ? 30e3 : 5 * 60e3)) return;
+    try { const d = await getJSON(`${API}/scoreboard?groups=80&limit=400&seasontype=3&week=1`); S.post = (d.events || []).map(norm); S.postAt = Date.now(); renderBracket(); }
+    catch (e) { S.postAt = Date.now(); }
+  }
+
+  function renderRoad() { renderCfpNext(); renderBracket(); renderB12(); }
+
+  /* ---------- Week selector ---------- */
+  function renderWeeks() {
+    const sel = $("week");
+    if (!S.calendar.length) return;
+    const cur = S.week || S.current;
+    sel.innerHTML = S.calendar.map(grp => `<optgroup label="${esc(grp.label)}">${grp.entries.map(e => {
+      const v = grp.type + ":" + e.value;
+      const isCur = S.current && S.current.type === grp.type && String(S.current.week) === String(e.value);
+      return `<option value="${esc(v)}"${cur && cur.type === grp.type && String(cur.week) === String(e.value) ? " selected" : ""}>${esc(e.label)}${e.detail ? " · " + esc(e.detail) : ""}${isCur ? " (this week)" : ""}</option>`;
+    }).join("")}</optgroup>`).join("");
+    const opts = [...sel.options], i = sel.selectedIndex;
+    $("prevwk").disabled = i <= 0;
+    $("nextwk").disabled = i < 0 || i >= opts.length - 1;
+  }
+
+  /* ---------- Rankings by week ---------- */
+  // ESPN's "Week N" poll is the one released before Week N's games, so it lines up with that week's scoreboard.
+  function parsePolls(d) {
+    return (d?.rankings || []).filter(r => Array.isArray(r.ranks) && r.ranks.length).map(r => ({
+      key: r.type || r.shortName || r.name, name: r.name, shortName: r.shortName || r.name,
+      headline: r.headline || r.name, ranks: r.ranks, others: r.others || [],
+      week: r.occurrence?.number != null ? String(r.occurrence.number) : null,
+      stype: String(r.season?.type?.type ?? r.season?.type ?? ""), final: !!r.occurrence?.last,
+      label: r.occurrence?.displayValue || ""
+    }));
+  }
+  const pollWeek = list => list.find(p => p.week)?.week || null;
+  function choosePoll() {
+    // The first time CFP rankings appear, switch to them even if AP was picked earlier.
+    const cfpNow = S.polls.find(p => /cfp|playoff/i.test(p.key + p.name)) || (S.latestPolls || []).find(p => /cfp|playoff/i.test(p.key + p.name));
+    if (cfpNow && !S.cfpSeen) { S.cfpSeen = true; S.pollPick = null; save(); }
+    if (S.pollPick && S.polls.some(p => p.key === S.pollPick)) S.pollKey = S.pollPick;
+    else {
+      const cfp = S.polls.find(p => /cfp|playoff/i.test(p.key + p.name));
+      const ap = S.polls.find(p => /^ap$/i.test(p.key) || /AP/.test(p.name));
+      S.pollKey = (cfp || ap || S.polls[0] || {}).key || null;
+    }
+  }
+  async function pollsForWeek(sel) {
+    // Postseason: show the latest (final) rankings.
+    if (!sel || sel.type !== "2") return { polls: S.latestPolls || [], asked: null };
+    const latestWk = pollWeek(S.latestPolls || []);
+    if (latestWk === String(sel.week)) return { polls: S.latestPolls, asked: sel.week };
+    const key = `${S.seasonYear || ""}:${sel.type}:${sel.week}`;
+    S.pollCache = S.pollCache || {};
+    if (!S.pollCache[key]) {
+      try {
+        const d = await getJSON(`${API}/rankings?${S.seasonYear ? `seasons=${S.seasonYear}&` : ""}weeks=${sel.week}&types=2`);
+        const list = parsePolls(d);
+        // Past weeks never change, so keep them; recheck future weeks later.
+        if (list.length && pollWeek(list) === String(sel.week)) S.pollCache[key] = list;
+        else return { polls: list.length ? list : (S.latestPolls || []), asked: sel.week, missing: true };
+      } catch (e) { return { polls: S.latestPolls || [], asked: sel.week, missing: true, failed: true }; }
+    }
+    return { polls: S.pollCache[key], asked: sel.week };
+  }
+
+  /* ---------- Loading & refresh ---------- */
+  async function load() {
+    const req = (S.req = (S.req || 0) + 1);
+    S.loading = true;
+    $("refresh").textContent = "Refreshing…";
+    const wk = S.week ? `&week=${S.week.week}&seasontype=${S.week.type}` : "";
+    const [sb, rk] = await Promise.allSettled([
+      getJSON(`${API}/scoreboard?groups=80&limit=400${wk}`),
+      getJSON(`${API}/rankings`)
+    ]);
+    if (req !== S.req) return;   // a newer load (e.g. another week) superseded this one
+    S.loading = false;
+    $("refresh").textContent = "Refresh";
+    let problems = [];
+    if (sb.status === "fulfilled") {
+      const d = sb.value;
+      S.events = (d.events || []).map(norm);
+      if (d.season?.year) S.seasonYear = +d.season.year;
+      if (!S.week && d.week?.number) S.current = { type: String(d.season?.type ?? 2), week: String(d.week.number) };
+      const cal = d.leagues?.[0]?.calendar;
+      if (Array.isArray(cal) && cal.length && typeof cal[0] === "object") {
+        S.calendar = cal.filter(g => Array.isArray(g.entries) && g.entries.length).map(g => ({
+          type: String(g.value), label: g.label,
+          entries: g.entries.map(e => ({ value: e.value, label: e.label, detail: e.detail || "" }))
+        }));
+      }
+      S.lastOk = new Date();
+    } else problems.push("scores");
+    if (rk.status === "fulfilled") S.latestPolls = parsePolls(rk.value);
+    else if (!S.latestPolls) problems.push("rankings");
+    // Line the poll up with the week being viewed.
+    const sel = S.week || S.current;
+    const pw = await pollsForWeek(sel);
+    if (req !== S.req) return;
+    S.polls = pw.polls || [];
+    S.pollNote = pw.missing ? `The Week ${pw.asked} poll ${pw.failed ? "didn't load" : "isn't out yet"}; showing ${S.polls[0]?.label || "the latest"} instead.` : "";
+    choosePoll();
+
+    const err = $("err");
+    if (problems.length === 2) {
+      err.hidden = false;
+      err.textContent = `Couldn't reach ESPN's scoreboard feed. Check your internet connection; the page will try again on its own${S.auto ? "" : " when you press Refresh"}.`;
+    } else if (problems.length) {
+      err.hidden = false;
+      err.textContent = `Couldn't load the latest ${problems[0]} just now. Showing what loaded; trying again shortly.`;
+    } else err.hidden = true;
+
+    renderAll();
+    plan();
+    loadConfs();
+    loadPost();
+    FAVS.forEach(f => ensureSched(f));
+  }
+  function renderAll() {
+    renderWeeks();
+    renderSpots();
+    renderGames();
+    renderPoll();
+    renderRoad();
+    const live = S.events.filter(g => g.state === "in" && ranked(g)).length;
+    const liveAll = S.events.filter(g => g.state === "in").length;
+    $("dot").classList.toggle("on", liveAll > 0);
+    const wkLabel = (() => {
+      const w = S.week || S.current;
+      if (!w) return "";
+      const grp = S.calendar.find(g => g.type === w.type);
+      return grp?.entries.find(e => String(e.value) === String(w.week))?.label || `Week ${w.week}`;
+    })();
+    $("livecount").textContent = S.events.length
+      ? `${wkLabel ? wkLabel + " · " : ""}${live} ranked game${live === 1 ? "" : "s"} live${liveAll > live ? ` (${liveAll} FBS total)` : ""}`
+      : (S.lastOk ? `${wkLabel || "This week"} · no FBS games scheduled` : "Connecting to the scoreboard…");
+    $("updated").textContent = S.lastOk ? "Updated " + fmtClock.format(S.lastOk) : "";
+  }
+  function plan() {
+    clearTimeout(S.timer);
+    S.nextAt = null;
+    if (!S.auto) { tick(); return; }
+    const now = Date.now();
+    const live = S.events.some(g => g.state === "in");
+    const soon = S.events.some(g => g.state === "pre" && g.date - now < 45 * 60e3 && g.date - now > -3 * 3600e3);
+    const ms = live || soon ? 30e3 : 3 * 60e3;
+    S.nextAt = now + ms;
+    S.timer = setTimeout(() => { if (!document.hidden) load(); else S.nextAt = null; }, ms);
+    tick();
+  }
+  function tick() {
+    const el = $("next");
+    if (!S.auto) { el.textContent = "Auto-refresh paused"; return; }
+    if (!S.nextAt) { el.textContent = ""; return; }
+    const s = Math.max(0, Math.round((S.nextAt - Date.now()) / 1000));
+    el.textContent = `Next refresh in ${s >= 60 ? Math.round(s / 60) + " min" : s + "s"}`;
+  }
+  setInterval(tick, 1000);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && S.auto && (!S.nextAt || Date.now() >= S.nextAt)) load();
+  });
+
+  /* ---------- Controls ---------- */
+  $("refresh").addEventListener("click", () => { FAVS.forEach(f => { if (S.sched[f.id]) S.sched[f.id].at = 0; }); load(); });
+  const autoBtn = $("auto");
+  const paintAuto = () => { autoBtn.setAttribute("aria-pressed", String(S.auto)); autoBtn.textContent = S.auto ? "Auto-refresh on" : "Auto-refresh off"; };
+  paintAuto();
+  autoBtn.addEventListener("click", () => { S.auto = !S.auto; save(); paintAuto(); plan(); });
+  function setWeek(v) {
+    const [type, week] = v.split(":");
+    S.week = S.current && S.current.type === type && String(S.current.week) === week ? null : { type, week };
+    S.events = [];
+    renderWeeks();
+    renderGames();
+    renderSpots();
+    load();
+  }
+  $("week").addEventListener("change", e => setWeek(e.target.value));
+  const stepWeek = d => {
+    const sel = $("week"), i = sel.selectedIndex + d;
+    if (i < 0 || i >= sel.options.length) return;
+    sel.selectedIndex = i;
+    setWeek(sel.value);
+  };
+  $("prevwk").addEventListener("click", () => stepWeek(-1));
+  $("nextwk").addEventListener("click", () => stepWeek(1));
+  document.querySelectorAll(".tab[data-f]").forEach(b => b.addEventListener("click", () => { S.filter = b.dataset.f; save(); renderGames(); }));
+  $("rr").addEventListener("change", e => { S.rrOnly = e.target.checked; save(); renderGames(); });
+  $("pollsel").addEventListener("click", e => {
+    const b = e.target.closest("[data-poll]"); if (!b) return;
+    S.pollKey = S.pollPick = b.dataset.poll; save(); renderPoll(); renderSpots(); renderRoad();
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+/* Shared menu bar across all dashboards. Deliberately one dark look in both themes,
+   so it also sits behind the phone status bar when installed to the home screen. */
+.sitenav{background:#0B1016;color:#E6ECF1;padding-top:env(safe-area-inset-top,0px);position:relative;z-index:20;
+  font:600 14px/1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.sitenav-in{max-width:1280px;margin:0 auto;padding-block:7px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;gap:4px;align-items:center;overflow-x:auto;scrollbar-width:none}
+.sitenav-in::-webkit-scrollbar{display:none}
+.sitenav a{color:#B9C5D0;text-decoration:none;padding:7px 12px;border-radius:999px;white-space:nowrap;display:inline-flex;align-items:center;gap:7px}
+.sitenav a img{width:18px;height:18px;border-radius:5px}
+.sitenav a:hover{background:rgba(255,255,255,.08);color:#fff}
+.sitenav a[aria-current="page"]{background:#E6ECF1;color:#0B1016}
+.sitenav a:focus-visible{outline:2px solid #7FB3FF;outline-offset:2px}
+body{padding-top:0 !important}
+@media (max-width:420px){.sitenav a img{display:none}.sitenav a{padding:7px 10px}}
