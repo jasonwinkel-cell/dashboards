@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="NFL">
-<meta name="app-version" content="2026-11-08.5">
+<meta name="app-version" content="2026-11-08.6">
 <link rel="stylesheet" href="assets/nav.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -444,44 +444,68 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
   }
 
   /* ---------- rooting guide (simple, ignores tiebreakers) ---------- */
+  // Who matters to "my team" depends on what it is playing for:
+  //  - division: rivals within reach of the division lead (either direction)
+  //  - seed: if my team leads its division, the other top teams it is competing with for seeding and the bye
+  //  - wild: if my team is not leading its division, teams near it in the wild-card race
   function raceInfo(me) {
     const sd = seedsFor(me.conf);
     const seed7 = sd[SPOTS - 1], seed8 = sd[SPOTS];
     const myIdx = sd.indexOf(me);
     const lead = leaderOf(me.div);
-    const divGB = lead === me ? 0 : gb(me, lead);
+    const isLeader = lead === me;
+    const divGB = isLeader ? 0 : gb(me, lead);
     const left = GAMES - me.gp;
-    const inDivRace = lead !== me ? divGB <= left : true;
-    // competitors: same-conference teams near the cut line relative to me
-    const comps = new Set();
+    const reach = Math.max(1.5, Math.min(3, left / 4 + 1));     // games of separation that can still change hands
+    const seedReach = Math.min(2, reach);
+    const roles = new Map();
     sd.forEach((t, i) => {
       if (t === me) return;
-      const close = Math.abs(gb(me, t)) <= Math.max(2, Math.min(4, left / 3 + 1));
-      if (t.div === me.div && inDivRace && close) comps.add(t.id);
-      else if (close && (i >= 4 || myIdx >= 4) && i <= SPOTS + 3) comps.add(t.id);
+      const sep = Math.abs(gb(me, t));
+      if (t.div === me.div) { if (sep <= reach) roles.set(t.id, "div"); return; }
+      if (isLeader) {
+        // other division leaders, or teams within a game of leading their division, that are close in record
+        const tl = leaderOf(t.div);
+        const contender = tl === t || gb(t, tl) <= 1;
+        if (contender && sep <= seedReach) roles.set(t.id, "seed");
+      } else if (i >= 4 && i <= SPOTS + 3 && sep <= reach) {
+        roles.set(t.id, "wild");
+      }
     });
-    return { sd, seed7, seed8, myIdx, lead, divGB, left, comps };
+    return { sd, seed7, seed8, myIdx, lead, isLeader, divGB, left, roles, comps: new Set(roles.keys()) };
+  }
+  function threatLine(t, me, R) {
+    const role = R.roles.get(t.id), ts = R.sd.indexOf(t) + 1, ms = R.myIdx + 1;
+    const g = gb(me, t);                     // > 0: t is ahead of me; < 0: t is behind
+    const games = x => `${fmtGB(Math.abs(x))} game${Math.abs(x) === 1 ? "" : "s"}`;
+    if (role === "div") {
+      if (g > 0) return `The ${t.name} (${rec(t)}) lead the ${me.div}, ${games(g)} ahead of the ${me.name}.`;
+      if (g < 0) return `The ${t.name} (${rec(t)}) are ${games(g)} behind the ${me.name} in the ${me.div}.`;
+      return `The ${t.name} (${rec(t)}) are level with the ${me.name} in the ${me.div}.`;
+    }
+    if (role === "seed") {
+      if (ts < ms) return `The ${t.name} (${rec(t)}) hold the ${me.conf}'s #${ts} seed${ts === 1 ? " and only first-round bye" : ""}, just ahead of the ${me.name} (#${ms}). A ${t.name} loss helps the ${me.name} move up.`;
+      return `The ${t.name} (${rec(t)}, #${ts}) are chasing the ${me.name} (#${ms}) for a top ${me.conf} seed${ms === 1 ? " and the bye" : ""}.`;
+    }
+    if (ts <= SPOTS && ts < ms) return `The ${t.name} (${rec(t)}) hold the #${ts} seed, a wild-card spot the ${me.name} are chasing.`;
+    return `The ${t.name} (${rec(t)}) are chasing the ${me.name} for a wild-card spot.`;
   }
   function rootFor(g, me, R, includeFinal) {
     if (!me || (g.state === "post" && !includeFinal)) return null;
     const a = team(g.away.id), h = team(g.home.id);
     if (!a || !h || a === me || h === me) return null;
-    const ca = R.comps.has(a.id), ch = R.comps.has(h.id);
-    if (!ca && !ch) return null;
-    let pick, why;
-    if (ca && ch) {
-      const worse = a.pct < h.pct ? a : h.pct < a.pct ? h : (a.div === me.div ? h : a);
-      const other = worse === a ? h : a;
-      pick = worse; why = `Both teams are in the ${me.name}' race. The ${other.name} (${rec(other)}) are the bigger threat, so a loss by them helps more.`;
-      if (a.div === me.div && h.div !== me.div) { pick = h; why = `The ${a.name} (${rec(a)}) are ${me.name} division rivals in the ${me.div}.`; }
-      if (h.div === me.div && a.div !== me.div) { pick = a; why = `The ${h.name} (${rec(h)}) are ${me.name} division rivals in the ${me.div}.`; }
-    } else {
-      const threat = ca ? a : h; pick = ca ? h : a;
-      const ahead = threat.pct > me.pct;
-      why = threat.div === me.div
-        ? (ahead ? `The ${threat.name} (${rec(threat)}) are ahead of the ${me.name} in the ${me.div}.` : `The ${threat.name} (${rec(threat)}) are chasing the ${me.name} in the ${me.div}.`)
-        : `The ${threat.name} (${rec(threat)}) are competing with the ${me.name} for an ${me.conf} playoff spot.`;
-    }
+    const ra = R.roles.get(a.id), rh = R.roles.get(h.id);
+    if (!ra && !rh) return null;
+    let against;
+    if (ra && rh) {
+      // a division rival matters most; otherwise the team with the better record is the bigger threat
+      if (ra === "div" && rh !== "div") against = a;
+      else if (rh === "div" && ra !== "div") against = h;
+      else against = a.pct > h.pct ? a : h.pct > a.pct ? h : (R.sd.indexOf(a) < R.sd.indexOf(h) ? a : h);
+    } else against = ra ? a : h;
+    const pick = against === a ? h : a;
+    let why = threatLine(against, me, R);
+    if (ra && rh) why += ` Both teams matter to the ${me.name}, but the ${against.name} are the bigger threat.`;
     return { pick, why };
   }
 
@@ -514,7 +538,7 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
       const second = divTable(me.div).find(t => t !== me);
       const magic = second ? Math.max(0, GAMES + 1 - Math.round(W(me)) - Math.round(L(second))) : null;
       const lg = gb(second, me);
-      path = `<b>${lg ? `Leads the ${me.div}` : `Tied for the ${me.div} lead`}</b> ${lg ? `by ${fmtGB(lg)} over` : "with"} the ${esc(second.name)}${lg ? "" : ", holding the tiebreaker for now,"} and would host a wild-card game as the #${seedNo} seed. ${magic != null && magic > 0 ? `Magic number to clinch the division: <b>${magic}</b> (any combination of ${me.name} wins and ${second.name} losses).` : ""} The #1 seed and bye are ${fmtGB(gb(me, R.sd[0]))} games away.`;
+      path = `<b>${lg ? `Leads the ${me.div}` : `Tied for the ${me.div} lead`}</b> ${lg ? `by ${fmtGB(lg)} over` : "with"} the ${esc(second.name)}${lg ? "" : ", holding the tiebreaker for now,"} and would host a wild-card game as the #${seedNo} seed. ${magic != null && magic > 0 ? `Magic number to clinch the division: <b>${magic}</b> (any combination of ${me.name} wins and ${second.name} losses).` : ""} ${R.sd[0] === me ? "" : gb(me, R.sd[0]) > 0 ? `The #1 seed and bye (${esc(R.sd[0].name)}, ${rec(R.sd[0])}) are ${fmtGB(gb(me, R.sd[0]))} game${gb(me, R.sd[0]) === 1 ? "" : "s"} away.` : `The ${esc(R.sd[0].name)} (${rec(R.sd[0])}) hold the #1 seed and bye on winning percentage; the ${me.name} are even with them in games behind.`}`;
     } else if (seedNo <= SPOTS) {
       path = `<b>Holds wild-card spot #${seedNo - 4}</b>, ${gb(s8, me) ? `${fmtGB(gb(s8, me))} game${gb(s8, me) === 1 ? "" : "s"} ahead of` : "tied on record with, but ahead on tiebreakers of,"} the first team out (${esc(s8.name)}, ${rec(s8)}). ${R.divGB ? `Trails the ${esc(lead.name)} by ${fmtGB(R.divGB)} in the ${me.div}.` : ""}`;
     } else {
