@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="NFL">
-<meta name="app-version" content="2026-11-08.4">
+<meta name="app-version" content="2026-11-08.5">
 <link rel="stylesheet" href="assets/nav.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -472,13 +472,15 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
     if (ca && ch) {
       const worse = a.pct < h.pct ? a : h.pct < a.pct ? h : (a.div === me.div ? h : a);
       const other = worse === a ? h : a;
-      pick = worse; why = `Both are in your race; the ${other.name} (${rec(other)}) are the bigger threat, so a ${other.name} loss helps more.`;
-      if (a.div === me.div && h.div !== me.div) { pick = h; why = `${a.name} is a division rival.`; }
-      if (h.div === me.div && a.div !== me.div) { pick = a; why = `${h.name} is a division rival.`; }
+      pick = worse; why = `Both teams are in the ${me.name}' race. The ${other.name} (${rec(other)}) are the bigger threat, so a loss by them helps more.`;
+      if (a.div === me.div && h.div !== me.div) { pick = h; why = `The ${a.name} (${rec(a)}) are ${me.name} division rivals in the ${me.div}.`; }
+      if (h.div === me.div && a.div !== me.div) { pick = a; why = `The ${h.name} (${rec(h)}) are ${me.name} division rivals in the ${me.div}.`; }
     } else {
       const threat = ca ? a : h; pick = ca ? h : a;
       const ahead = threat.pct > me.pct;
-      why = threat.div === me.div ? (ahead ? `${threat.name} (${rec(threat)}) is ahead of you in the ${me.div}.` : `${threat.name} (${rec(threat)}) is chasing you in the ${me.div}.`) : `${threat.name} (${rec(threat)}) is in the ${me.conf} wild-card race.`;
+      why = threat.div === me.div
+        ? (ahead ? `The ${threat.name} (${rec(threat)}) are ahead of the ${me.name} in the ${me.div}.` : `The ${threat.name} (${rec(threat)}) are chasing the ${me.name} in the ${me.div}.`)
+        : `The ${threat.name} (${rec(threat)}) are competing with the ${me.name} for an ${me.conf} playoff spot.`;
     }
     return { pick, why };
   }
