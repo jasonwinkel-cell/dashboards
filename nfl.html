@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="NFL">
-<meta name="app-version" content="2026-11-08.8">
+<meta name="app-version" content="2026-11-08.9">
 <link rel="stylesheet" href="assets/nav.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -541,7 +541,7 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
       const second = divTable(me.div).find(t => t !== me);
       const magic = second ? Math.max(0, GAMES + 1 - Math.round(W(me)) - Math.round(L(second))) : null;
       const lg = gb(second, me);
-      path = `<b>${lg ? `Leads the ${me.div}` : `Tied for the ${me.div} lead`}</b> ${lg ? `by ${fmtGB(lg)} over` : "with"} the ${esc(second.name)}${lg ? "" : ", holding the tiebreaker for now,"} . ${magic != null && magic > 0 ? `Magic number to clinch the division: <b>${magic}</b> (any combination of ${me.name} wins and ${second.name} losses).` : ""} ${s8 ? `Even without the division, they're ${gb(s8, me) > 0 ? `${fmtGB(gb(s8, me))} game${gb(s8, me) === 1 ? "" : "s"} clear of` : "level on record with"} the first team out of the playoffs (${esc(s8.name)}, ${rec(s8)}).` : ""}`;
+      path = `<b>${lg ? `Leads the ${me.div}` : `Tied for the ${me.div} lead`}</b> ${lg ? `by ${fmtGB(lg)} over` : "with"} the ${esc(second.name)}${lg ? "" : ", holding the tiebreaker for now"}. ${magic != null && magic > 0 ? `Magic number to clinch the division: <b>${magic}</b> (any combination of ${me.name} wins and ${second.name} losses).` : ""} ${s8 ? `Even without the division, they're ${gb(s8, me) > 0 ? `${fmtGB(gb(s8, me))} game${gb(s8, me) === 1 ? "" : "s"} clear of` : "level on record with"} the first team out of the playoffs (${esc(s8.name)}, ${rec(s8)}).` : ""}`;
     } else if (seedNo <= SPOTS) {
       path = `<b>Holds wild-card spot #${seedNo - 4}</b>, ${gb(s8, me) ? `${fmtGB(gb(s8, me))} game${gb(s8, me) === 1 ? "" : "s"} ahead of` : "tied on record with, but ahead on tiebreakers of,"} the first team out (${esc(s8.name)}, ${rec(s8)}). ${R.divGB ? `Trails the ${esc(lead.name)} by ${fmtGB(R.divGB)} in the ${me.div}.` : ""}`;
     } else {
