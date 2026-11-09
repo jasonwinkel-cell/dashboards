@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="NFL">
-<meta name="app-version" content="2026-11-08.3">
+<meta name="app-version" content="2026-11-08.4">
 <link rel="stylesheet" href="assets/nav.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,6 +26,7 @@
   --afc:#C8102E; --afc-soft:#FBE6E9; --nfc:#0B4FA0; --nfc-soft:#E3ECF8;
   --in:#1F7A45; --in-soft:#E2F2E8; --bubble:#B26A00; --bubble-soft:#FBEFD9; --out:#8A93A3;
   --live:#D24A0E; --live-bg:#FCE9DF;
+  --good:#1F7A45; --good-bg:#E2F2E8; --bad:#C0292B; --bad-bg:#FBE5E5;
   --display:"Saira Extra Condensed","Arial Narrow",Impact,sans-serif;
   --body:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --mono:"Roboto Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
@@ -38,6 +39,7 @@
     --afc:#FF5A6E; --afc-soft:#311820; --nfc:#6FA5F0; --nfc-soft:#15243A;
     --in:#5CC98A; --in-soft:#13291D; --bubble:#F0B048; --bubble-soft:#30250F; --out:#6C778B;
     --live:#FF7B42; --live-bg:#3A2117;
+    --good:#5CC98A; --good-bg:#13291D; --bad:#FF6B6B; --bad-bg:#371719;
     color-scheme:dark;
   }
 }
@@ -47,6 +49,7 @@
   --afc:#FF5A6E; --afc-soft:#311820; --nfc:#6FA5F0; --nfc-soft:#15243A;
   --in:#5CC98A; --in-soft:#13291D; --bubble:#F0B048; --bubble-soft:#30250F; --out:#6C778B;
   --live:#FF7B42; --live-bg:#3A2117;
+  --good:#5CC98A; --good-bg:#13291D; --bad:#FF6B6B; --bad-bg:#371719;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -189,7 +192,20 @@ main.wrap{padding-block:20px 36px;display:flex;flex-direction:column;gap:22px}
 @keyframes blink{50%{opacity:.25}}
 .pill.final{background:transparent;border:1px solid var(--line)}
 .tv{font:500 11.5px/1 var(--mono);color:var(--ink-3)}
-.trow{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:8px;align-items:center}
+.trow{display:grid;grid-template-columns:18px 24px minmax(0,1fr) auto;gap:8px;align-items:center}
+.thumb{width:18px;height:18px;display:block}
+.thumb.up{color:var(--good)} .thumb.down{color:var(--bad)} .thumb.watch{color:var(--ink-3)}
+.verdict{font:700 10.5px/1.3 var(--body);letter-spacing:.06em;text-transform:uppercase;border-radius:4px;padding:2px 6px;display:inline-flex;gap:4px;align-items:center}
+.verdict.good{color:var(--good);background:var(--good-bg)} .verdict.bad{color:var(--bad);background:var(--bad-bg)}
+.why{font-size:12.5px;color:var(--ink-2);line-height:1.35}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;font:500 12.5px/1.3 var(--body);color:var(--ink-2);align-items:center}
+.legend span{display:inline-flex;gap:5px;align-items:center}
+.legend .thumb{width:16px;height:16px}
+.ftabs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 12px}
+.ftab{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 13px;cursor:pointer;font:600 13.5px/1 var(--body);color:var(--ink-2)}
+.ftab[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.ftab .c{opacity:.65;margin-left:4px;font-variant-numeric:tabular-nums}
+.fchk{display:inline-flex;gap:6px;align-items:center;font:600 13.5px/1 var(--body);color:var(--ink-2);margin-left:6px;cursor:pointer}
 .trow img{width:24px;height:24px;object-fit:contain}
 .trow .tn{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .trow .tn small{font:500 12px/1 var(--mono);color:var(--ink-3);margin-left:6px;font-weight:400}
@@ -257,6 +273,14 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
 
   <section aria-labelledby="gm-h">
     <div class="sec-h"><h2 id="gm-h">This week’s games</h2><span class="sub" id="gm-sub"></span></div>
+    <div class="ftabs" role="group" aria-label="Filter games">
+      <button class="ftab" type="button" data-gf="all" aria-pressed="true">All<span class="c" id="gc-all"></span></button>
+      <button class="ftab" type="button" data-gf="in" aria-pressed="false">Live<span class="c" id="gc-in"></span></button>
+      <button class="ftab" type="button" data-gf="pre" aria-pressed="false">Upcoming<span class="c" id="gc-pre"></span></button>
+      <button class="ftab" type="button" data-gf="post" aria-pressed="false">Final<span class="c" id="gc-post"></span></button>
+      <label class="fchk"><input type="checkbox" id="raceonly"> <span id="raceonly-l">Only games that matter to my team</span></label>
+    </div>
+    <div class="legend" id="legend" style="margin-bottom:12px"></div>
     <div class="games" id="games"><div class="skel"></div></div>
   </section>
 
@@ -308,8 +332,10 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
     if ("my" in v) { S.my = v.my || ""; S.myChosen = true; }
     if (Array.isArray(v.watch)) S.watch = v.watch;
     if (v.showHunt) S.showHunt = v.showHunt;
+    if (v.gFilter) S.gFilter = v.gFilter;
+    if (typeof v.raceOnly === "boolean") S.raceOnly = v.raceOnly;
   } catch (e) {}
-  const save = () => { try { localStorage.setItem("nflpath", JSON.stringify({ my: S.my, watch: S.watch, showHunt: S.showHunt })); } catch (e) {} };
+  const save = () => { try { localStorage.setItem("nflpath", JSON.stringify({ my: S.my, watch: S.watch, showHunt: S.showHunt, gFilter: S.gFilter, raceOnly: S.raceOnly })); } catch (e) {} };
   const watched = t => !!t && S.watch.includes(t.abbr) && t.id !== S.my;
 
   const $ = id => document.getElementById(id);
@@ -436,8 +462,8 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
     });
     return { sd, seed7, seed8, myIdx, lead, divGB, left, comps };
   }
-  function rootFor(g, me, R) {
-    if (!me || g.state === "post") return null;
+  function rootFor(g, me, R, includeFinal) {
+    if (!me || (g.state === "post" && !includeFinal)) return null;
     const a = team(g.away.id), h = team(g.home.id);
     if (!a || !h || a === me || h === me) return null;
     const ca = R.comps.has(a.id), ch = R.comps.has(h.id);
@@ -446,7 +472,7 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
     if (ca && ch) {
       const worse = a.pct < h.pct ? a : h.pct < a.pct ? h : (a.div === me.div ? h : a);
       const other = worse === a ? h : a;
-      pick = worse; why = `Both are in your race; a ${other.name} loss keeps the closer threat in check.`;
+      pick = worse; why = `Both are in your race; the ${other.name} (${rec(other)}) are the bigger threat, so a ${other.name} loss helps more.`;
       if (a.div === me.div && h.div !== me.div) { pick = h; why = `${a.name} is a division rival.`; }
       if (h.div === me.div && a.div !== me.div) { pick = a; why = `${h.name} is a division rival.`; }
     } else {
@@ -587,24 +613,50 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
     document.querySelectorAll(".toggle-hunt").forEach(b => b.onclick = () => { S.showHunt[b.dataset.conf] = !S.showHunt[b.dataset.conf]; save(); renderConfs(); });
   }
 
-  function teamRow(g, t, o) {
+  const THUMB = '<path fill="currentColor" d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/>';
+  const thumb = (kind, label) => `<svg class="thumb ${kind}" viewBox="0 0 24 24" role="img" aria-label="${esc(label)}"${kind === "down" ? ' style="transform:rotate(180deg)"' : ""}><title>${esc(label)}</title>${THUMB}</svg>`;
+  // Who to root for in a game: your team's own game, then your playoff race, then teams you watch.
+  function rooting(g) {
+    const me = team(S.my);
+    if (me && (g.away.id === me.id || g.home.id === me.id)) return { pick: me, kind: "mine" };
+    if (me) { const r = rootFor(g, me, raceInfo(me), true); if (r) return { ...r, kind: "race" }; }
+    const w = [team(g.away.id), team(g.home.id)].filter(watched);
+    if (w.length === 1) return { pick: w[0], kind: "watch" };
+    return null;
+  }
+  function teamRow(g, t, o, root) {
     const T = team(t.id);
+    const me = team(S.my);
+    let icon = "<span></span>";
+    if (root) {
+      if (root.pick.id === t.id) icon = root.kind === "watch" ? thumb("watch", `You're watching the ${root.pick.name}`) : thumb("up", root.kind === "mine" ? `Your team` : `Root for the ${T?.name || t.name}: a win helps the ${me?.name}`);
+      else if (root.kind !== "watch") icon = thumb("down", root.kind === "mine" ? `Opponent` : `Root against the ${T?.name || t.name}`);
+    }
     const lose = g.state === "post" && o.winner && !t.winner;
     const poss = g.state === "in" && g.sit?.possession && String(g.sit.possession) === t.id;
     const seedNo = T ? seedsFor(T.conf).indexOf(T) + 1 : 0;
-    return `<div class="trow${lose ? " lose" : ""}">${t.logo ? `<img src="${esc(t.logo)}" alt="" loading="lazy">` : "<span></span>"}
+    return `<div class="trow${lose ? " lose" : ""}">${icon}${t.logo ? `<img src="${esc(t.logo)}" alt="" loading="lazy">` : "<span></span>"}
       <span class="tn">${esc(T?.name || t.name)}<small>${T ? rec(T) : esc(t.record)}${seedNo && seedNo <= SPOTS ? " · #" + seedNo : ""}</small></span>
       <span class="sc">${poss ? BALL : ""}${g.state === "pre" ? "" : esc(t.score ?? "")}</span></div>`;
+  }
+  function verdict(g, root) {
+    if (!root || root.kind === "watch") return "";
+    const pk = root.pick.id === g.away.id ? g.away : g.home, ot = pk === g.away ? g.home : g.away;
+    const a = +pk.score, b = +ot.score;
+    if (g.state === "post") return a > b ? '<span class="verdict good">Went your way</span>' : a < b ? '<span class="verdict bad">Didn’t go your way</span>' : '<span class="verdict">Tie</span>';
+    if (g.state === "in" && a !== b) return a > b ? '<span class="verdict good">Going your way</span>' : '<span class="verdict bad">Not going your way</span>';
+    return root.kind === "race" ? `<span class="impact">${esc(team(S.my)?.name || "Your")} race</span>` : "";
   }
   function gameCard(g) {
     const me = team(S.my);
     const mine = me && (g.away.id === me.id || g.home.id === me.id);
-    const R = me ? raceInfo(me) : null;
-    const rel = me && !mine && R && (R.comps.has(g.away.id) || R.comps.has(g.home.id));
+    const root = rooting(g);
     const dd = g.state === "in" ? (g.sit?.downDistanceText || "") : "";
+    const watching = !mine && (watched(team(g.away.id)) || watched(team(g.home.id)));
     return `<article class="game${g.state === "in" ? " live" : ""}${mine ? " mine-g" : ""}">
-      <div class="g-top">${pill(g)}${rel ? '<span class="impact">Affects your race</span>' : ""}${!mine && (watched(team(g.away.id)) || watched(team(g.home.id))) ? '<span class="impact" style="color:var(--ink-2);background:var(--surface-2)">Watching</span>' : ""}<span class="tv">${esc(g.tv)}</span></div>
-      ${teamRow(g, g.away, g.home)}${teamRow(g, g.home, g.away)}
+      <div class="g-top">${pill(g)}${verdict(g, root)}${watching ? '<span class="impact" style="color:var(--ink-2);background:var(--surface-2)">Watching</span>' : ""}<span class="tv">${esc(g.tv)}</span></div>
+      ${teamRow(g, g.away, g.home, root)}${teamRow(g, g.home, g.away, root)}
+      ${root && root.kind === "race" ? `<div class="why">${esc(root.why)}</div>` : ""}
       <div class="g-foot"><span class="${dd ? "dd" : ""}">${esc(dd || g.note || "")}</span><a href="${esc(g.link)}" target="_blank" rel="noopener">Gamecast</a></div>
     </article>`;
   }
@@ -616,7 +668,19 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
       const wa = watched(team(a.away.id)) || watched(team(a.home.id)) ? 0 : 1, wb = watched(team(b.away.id)) || watched(team(b.home.id)) ? 0 : 1;
       return ma - mb || (order[a.state] - order[b.state]) || wa - wb || (a.date - b.date);
     });
-    $("games").innerHTML = list.length ? list.map(gameCard).join("") : `<p class="note">No games scheduled this week.</p>`;
+    const matters = g => { const r = rooting(g); return !!r && r.kind !== "watch"; };
+    const base = S.raceOnly && me ? list.filter(matters) : list;
+    const counts = { all: base.length, in: 0, pre: 0, post: 0 };
+    base.forEach(g => counts[g.state] = (counts[g.state] || 0) + 1);
+    ["all", "in", "pre", "post"].forEach(k => $("gc-" + k).textContent = counts[k] || 0);
+    const f = S.gFilter || "all";
+    document.querySelectorAll(".ftab[data-gf]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.gf === f)));
+    $("raceonly").checked = !!S.raceOnly;
+    $("raceonly-l").textContent = me ? `Only games that matter to the ${me.name}` : "Only games that matter to my team";
+    const shown = base.filter(g => f === "all" || g.state === f);
+    $("legend").innerHTML = me ? `<span>${thumb("up", "Root for")}Root for: a win helps the ${esc(me.name)}</span><span>${thumb("down", "Root against")}Root against</span>${S.watch.length ? `<span>${thumb("watch", "Watching")}A team you watch</span>` : ""}` : "";
+    $("games").innerHTML = shown.length ? shown.map(gameCard).join("")
+      : `<p class="note">${!list.length ? "No games scheduled this week." : f === "in" ? "No games are being played right now." : f === "pre" ? "No games left to play this week." : f === "post" ? "No games have finished yet this week." : "No games match this filter."}</p>`;
     const live = S.events.filter(g => g.state === "in").length;
     $("gm-sub").textContent = S.events.length ? `${S.events.length} games${live ? ` · ${live} live` : ""}` : "";
   }
@@ -752,6 +816,8 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
 
   /* ---------- controls ---------- */
   $("refresh").addEventListener("click", () => { if (S.sched) S.sched.at = 0; S.standAt = 0; load(); });
+  document.querySelectorAll(".ftab[data-gf]").forEach(b => b.addEventListener("click", () => { S.gFilter = b.dataset.gf; save(); renderGames(); }));
+  $("raceonly").addEventListener("change", e => { S.raceOnly = e.target.checked; save(); renderGames(); });
   $("team").addEventListener("change", e => { S.my = e.target.value; S.myChosen = true; S.sched = null; save(); renderAll(); loadSched(); });
   $("wgrid").addEventListener("change", e => {
     if (e.target.type !== "checkbox") return;
