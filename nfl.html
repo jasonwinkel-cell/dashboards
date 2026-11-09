@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="NFL">
-<meta name="app-version" content="2026-11-08.10">
+<meta name="app-version" content="2026-11-08.11">
 <link rel="stylesheet" href="assets/nav.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -185,7 +185,8 @@ main.wrap{padding-block:20px 36px;display:flex;flex-direction:column;gap:22px}
 .game{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 12px;display:flex;flex-direction:column;gap:5px;min-width:0}
 .game.live{border-color:color-mix(in srgb,var(--live) 50%,var(--line))}
 .game.mine-g{box-shadow:inset 4px 0 0 var(--ink)}
-.g-top{display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap}
+.g-top{display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:nowrap;min-width:0}
+.g-top .tv{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 9px;font:700 11.5px/1.2 var(--body);letter-spacing:.06em;text-transform:uppercase;background:var(--surface-2);color:var(--ink-2);white-space:nowrap}
 .pill.live{background:var(--live-bg);color:var(--live)}
 .pill.live::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;animation:blink 1.2s infinite}
@@ -683,7 +684,7 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
     const dd = g.state === "in" ? (g.sit?.downDistanceText || "") : "";
     const watching = !mine && (watched(team(g.away.id)) || watched(team(g.home.id)));
     return `<article class="game${g.state === "in" ? " live" : ""}${mine ? " mine-g" : ""}">
-      <div class="g-top">${pill(g)}${verdict(g, root)}${watching ? '<span class="impact" style="color:var(--ink-2);background:var(--surface-2)">Watching</span>' : ""}<span class="tv">${esc(g.tv)}</span></div>
+      <div class="g-top">${pill(g)}${verdict(g, root) || (watching ? '<span class="impact" style="color:var(--ink-2);background:var(--surface-2)">Watching</span>' : "")}<span class="tv">${esc(g.tv)}</span></div>
       ${teamRow(g, g.away, g.home, root)}${teamRow(g, g.home, g.away, root)}
 
       <div class="g-foot"><span class="${dd ? "dd" : ""}">${esc(dd || g.note || "")}</span><a href="${esc(g.link)}" target="_blank" rel="noopener">Gamecast</a></div>
