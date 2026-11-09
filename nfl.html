@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="NFL">
-<meta name="app-version" content="2026-11-08.9">
+<meta name="app-version" content="2026-11-08.10">
 <link rel="stylesheet" href="assets/nav.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -219,7 +219,7 @@ main.wrap{padding-block:20px 36px;display:flex;flex-direction:column;gap:22px}
 
 /* divisions */
 .divs{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
-@media (min-width:600px){.divs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (min-width:600px){.divs{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(4,auto);grid-auto-flow:column}}
 .spot{display:inline-block;font:700 10.5px/1.3 var(--body);letter-spacing:.04em;border-radius:4px;padding:2px 6px;white-space:nowrap}
 .spot.dv{background:var(--in-soft);color:var(--in)}
 .spot.wc{background:var(--bubble-soft);color:var(--bubble)}
@@ -659,7 +659,7 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
     let icon = "<span></span>";
     if (root) {
       if (root.pick.id === t.id) icon = root.kind === "watch" ? thumb("watch", `You're watching the ${root.pick.name}`) : thumb("up", root.kind === "mine" ? `Your team` : `Root for the ${T?.name || t.name}: a win helps the ${me?.name}`);
-      else if (root.kind !== "watch") icon = thumb("down", root.kind === "mine" ? `Opponent` : `Root against the ${T?.name || t.name}`);
+      else if (root.kind !== "watch") icon = thumb("down", root.kind === "mine" ? `Opponent` : root.why || `Root against the ${T?.name || t.name}`);
     }
     const lose = g.state === "post" && o.winner && !t.winner;
     const poss = g.state === "in" && g.sit?.possession && String(g.sit.possession) === t.id;
@@ -685,7 +685,7 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
     return `<article class="game${g.state === "in" ? " live" : ""}${mine ? " mine-g" : ""}">
       <div class="g-top">${pill(g)}${verdict(g, root)}${watching ? '<span class="impact" style="color:var(--ink-2);background:var(--surface-2)">Watching</span>' : ""}<span class="tv">${esc(g.tv)}</span></div>
       ${teamRow(g, g.away, g.home, root)}${teamRow(g, g.home, g.away, root)}
-      ${root && root.kind === "race" ? `<div class="why">${esc(root.why)}</div>` : ""}
+
       <div class="g-foot"><span class="${dd ? "dd" : ""}">${esc(dd || g.note || "")}</span><a href="${esc(g.link)}" target="_blank" rel="noopener">Gamecast</a></div>
     </article>`;
   }
