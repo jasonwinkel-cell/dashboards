@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="NFL">
-<meta name="app-version" content="2026-11-08.6">
+<meta name="app-version" content="2026-11-08.7">
 <link rel="stylesheet" href="assets/nav.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -477,7 +477,8 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
   function threatLine(t, me, R) {
     const role = R.roles.get(t.id), ts = R.sd.indexOf(t) + 1, ms = R.myIdx + 1;
     const g = gb(me, t);                     // > 0: t is ahead of me; < 0: t is behind
-    const games = x => `${fmtGB(Math.abs(x))} game${Math.abs(x) === 1 ? "" : "s"}`;
+    const games = x => { const v = Math.abs(x), w = Math.floor(v), h = v % 1 ? "½" : "";
+      return v === 0.5 ? "half a game" : `${w}${h} game${v === 1 ? "" : "s"}`; };
     if (role === "div") {
       if (g > 0) return `The ${t.name} (${rec(t)}) lead the ${me.div}, ${games(g)} ahead of the ${me.name}.`;
       if (g < 0) return `The ${t.name} (${rec(t)}) are ${games(g)} behind the ${me.name} in the ${me.div}.`;
@@ -485,6 +486,10 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
     }
     if (role === "seed") {
       if (ts < ms) return `The ${t.name} (${rec(t)}) hold the ${me.conf}'s #${ts} seed${ts === 1 ? " and only first-round bye" : ""}, just ahead of the ${me.name} (#${ms}). A ${t.name} loss helps the ${me.name} move up.`;
+      if (ts > 4) {
+        const tl = leaderOf(t.div), d = gb(t, tl);
+        return `The ${t.name} (${rec(t)}) are ${d ? games(d) + " off" : "tied for"} the ${t.div} lead and could challenge the ${me.name} (#${ms}) for a top ${me.conf} seed${ms === 1 ? " and the bye" : ""}.`;
+      }
       return `The ${t.name} (${rec(t)}, #${ts}) are chasing the ${me.name} (#${ms}) for a top ${me.conf} seed${ms === 1 ? " and the bye" : ""}.`;
     }
     if (ts <= SPOTS && ts < ms) return `The ${t.name} (${rec(t)}) hold the #${ts} seed, a wild-card spot the ${me.name} are chasing.`;
