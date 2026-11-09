@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="NFL">
-<meta name="app-version" content="2026-11-08.7">
+<meta name="app-version" content="2026-11-08.8">
 <link rel="stylesheet" href="assets/nav.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -220,7 +220,12 @@ main.wrap{padding-block:20px 36px;display:flex;flex-direction:column;gap:22px}
 /* divisions */
 .divs{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
 @media (min-width:600px){.divs{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (min-width:1100px){.divs{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.spot{display:inline-block;font:700 10.5px/1.3 var(--body);letter-spacing:.04em;border-radius:4px;padding:2px 6px;white-space:nowrap}
+.spot.dv{background:var(--in-soft);color:var(--in)}
+.spot.wc{background:var(--bubble-soft);color:var(--bubble)}
+.spot.out{background:var(--surface-2);color:var(--out);border:1px solid var(--line)}
+.div td.sp{text-align:left}
+@media (max-width:520px){.div th:last-child,.div td:last-child{display:none}}
 .div{overflow:hidden}
 .div h4{margin:0;padding:9px 12px;font:800 18px/1 var(--display);text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid var(--cc,var(--line))}
 .div.afc{--cc:var(--afc)} .div.nfc{--cc:var(--nfc)}
@@ -299,7 +304,7 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
 
 
   <section aria-labelledby="dv-h">
-    <div class="sec-h"><h2 id="dv-h">Divisions</h2><span class="sub">GB = games behind the division leader · ● = also watching</span></div>
+    <div class="sec-h"><h2 id="dv-h">Divisions</h2><span class="sub"><span class="spot dv">Div</span> leads the division · <span class="spot wc">WC</span> holds a wild card · GB = games behind the division leader · ● = also watching</span></div>
     <div class="divs" id="divs"></div>
   </section>
 </main>
@@ -393,7 +398,11 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
     const rest = ts.filter(t => !leaders.includes(t)).sort((a, b) => b.pct - a.pct);
     return leaders.sort((a, b) => b.pct - a.pct).concat(rest);
   }
-  function divTable(d) { return S.teams.filter(t => t.div === d).sort((a, b) => b.pct - a.pct || (b.diff || 0) - (a.diff || 0)); }
+  function divTable(d) {
+    // Order by record; break ties the way ESPN's playoff seeding does (it applies the NFL tiebreakers).
+    const sd = S.teams.length ? seedsFor(d.slice(0, 3)) : [];
+    return S.teams.filter(t => t.div === d).sort((a, b) => b.pct - a.pct || (sd.indexOf(a) - sd.indexOf(b)));
+  }
   const leaderOf = d => { const sd = seedsFor(d.slice(0, 3)); return sd.find(t => t.div === d) || divTable(d)[0]; };
 
   // Conservative status: ESPN's clincher marker first, otherwise only certain-by-wins cases.
@@ -444,10 +453,10 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
   }
 
   /* ---------- rooting guide (simple, ignores tiebreakers) ---------- */
-  // Who matters to "my team" depends on what it is playing for:
-  //  - division: rivals within reach of the division lead (either direction)
-  //  - seed: if my team leads its division, the other top teams it is competing with for seeding and the bye
-  //  - wild: if my team is not leading its division, teams near it in the wild-card race
+  // Who matters to "my team": the two ways into the playoffs.
+  //  - div: rivals still within reach of the division lead (either direction)
+  //  - wild: teams near the wild-card line. For a division leader this is the fallback if it loses the
+  //    division, so only teams close in record count.
   function raceInfo(me) {
     const sd = seedsFor(me.conf);
     const seed7 = sd[SPOTS - 1], seed8 = sd[SPOTS];
@@ -457,20 +466,13 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
     const divGB = isLeader ? 0 : gb(me, lead);
     const left = GAMES - me.gp;
     const reach = Math.max(1.5, Math.min(3, left / 4 + 1));     // games of separation that can still change hands
-    const seedReach = Math.min(2, reach);
+    const wildReach = isLeader ? Math.min(2, reach) : reach;
     const roles = new Map();
     sd.forEach((t, i) => {
       if (t === me) return;
       const sep = Math.abs(gb(me, t));
       if (t.div === me.div) { if (sep <= reach) roles.set(t.id, "div"); return; }
-      if (isLeader) {
-        // other division leaders, or teams within a game of leading their division, that are close in record
-        const tl = leaderOf(t.div);
-        const contender = tl === t || gb(t, tl) <= 1;
-        if (contender && sep <= seedReach) roles.set(t.id, "seed");
-      } else if (i >= 4 && i <= SPOTS + 3 && sep <= reach) {
-        roles.set(t.id, "wild");
-      }
+      if (i >= 4 && i <= SPOTS + 3 && sep <= wildReach) roles.set(t.id, "wild");
     });
     return { sd, seed7, seed8, myIdx, lead, isLeader, divGB, left, roles, comps: new Set(roles.keys()) };
   }
@@ -484,13 +486,10 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
       if (g < 0) return `The ${t.name} (${rec(t)}) are ${games(g)} behind the ${me.name} in the ${me.div}.`;
       return `The ${t.name} (${rec(t)}) are level with the ${me.name} in the ${me.div}.`;
     }
-    if (role === "seed") {
-      if (ts < ms) return `The ${t.name} (${rec(t)}) hold the ${me.conf}'s #${ts} seed${ts === 1 ? " and only first-round bye" : ""}, just ahead of the ${me.name} (#${ms}). A ${t.name} loss helps the ${me.name} move up.`;
-      if (ts > 4) {
-        const tl = leaderOf(t.div), d = gb(t, tl);
-        return `The ${t.name} (${rec(t)}) are ${d ? games(d) + " off" : "tied for"} the ${t.div} lead and could challenge the ${me.name} (#${ms}) for a top ${me.conf} seed${ms === 1 ? " and the bye" : ""}.`;
-      }
-      return `The ${t.name} (${rec(t)}, #${ts}) are chasing the ${me.name} (#${ms}) for a top ${me.conf} seed${ms === 1 ? " and the bye" : ""}.`;
+    if (R.isLeader) {
+      return ts <= SPOTS
+        ? `The ${t.name} (${rec(t)}) hold a wild card (#${ts}). That's the ${me.name}' fallback if they lose the ${me.div} lead.`
+        : `The ${t.name} (${rec(t)}) are chasing a wild card, the ${me.name}' fallback if they lose the ${me.div} lead.`;
     }
     if (ts <= SPOTS && ts < ms) return `The ${t.name} (${rec(t)}) hold the #${ts} seed, a wild-card spot the ${me.name} are chasing.`;
     return `The ${t.name} (${rec(t)}) are chasing the ${me.name} for a wild-card spot.`;
@@ -538,12 +537,11 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
     else { headline = "In the hunt"; sub = gb(me, s7) ? `${fmtGB(gb(me, s7))} GB of the #7 seed` : "Tied with the #7 seed, behind on tiebreakers"; }
 
     if (st === "out") path = `The ${me.name} can no longer reach the playoffs.`;
-    else if (seedNo === 1) path = `<b>Holds the #1 seed</b> and the ${me.conf}'s only first-round bye. The #2 seed, ${esc(R.sd[1].name)}, is ${fmtGB(gb(R.sd[1], me))} game${gb(R.sd[1], me) === 1 ? "" : "s"} back.`;
     else if (lead === me) {
       const second = divTable(me.div).find(t => t !== me);
       const magic = second ? Math.max(0, GAMES + 1 - Math.round(W(me)) - Math.round(L(second))) : null;
       const lg = gb(second, me);
-      path = `<b>${lg ? `Leads the ${me.div}` : `Tied for the ${me.div} lead`}</b> ${lg ? `by ${fmtGB(lg)} over` : "with"} the ${esc(second.name)}${lg ? "" : ", holding the tiebreaker for now,"} and would host a wild-card game as the #${seedNo} seed. ${magic != null && magic > 0 ? `Magic number to clinch the division: <b>${magic}</b> (any combination of ${me.name} wins and ${second.name} losses).` : ""} ${R.sd[0] === me ? "" : gb(me, R.sd[0]) > 0 ? `The #1 seed and bye (${esc(R.sd[0].name)}, ${rec(R.sd[0])}) are ${fmtGB(gb(me, R.sd[0]))} game${gb(me, R.sd[0]) === 1 ? "" : "s"} away.` : `The ${esc(R.sd[0].name)} (${rec(R.sd[0])}) hold the #1 seed and bye on winning percentage; the ${me.name} are even with them in games behind.`}`;
+      path = `<b>${lg ? `Leads the ${me.div}` : `Tied for the ${me.div} lead`}</b> ${lg ? `by ${fmtGB(lg)} over` : "with"} the ${esc(second.name)}${lg ? "" : ", holding the tiebreaker for now,"} . ${magic != null && magic > 0 ? `Magic number to clinch the division: <b>${magic}</b> (any combination of ${me.name} wins and ${second.name} losses).` : ""} ${s8 ? `Even without the division, they're ${gb(s8, me) > 0 ? `${fmtGB(gb(s8, me))} game${gb(s8, me) === 1 ? "" : "s"} clear of` : "level on record with"} the first team out of the playoffs (${esc(s8.name)}, ${rec(s8)}).` : ""}`;
     } else if (seedNo <= SPOTS) {
       path = `<b>Holds wild-card spot #${seedNo - 4}</b>, ${gb(s8, me) ? `${fmtGB(gb(s8, me))} game${gb(s8, me) === 1 ? "" : "s"} ahead of` : "tied on record with, but ahead on tiebreakers of,"} the first team out (${esc(s8.name)}, ${rec(s8)}). ${R.divGB ? `Trails the ${esc(lead.name)} by ${fmtGB(R.divGB)} in the ${me.div}.` : ""}`;
     } else {
@@ -715,14 +713,20 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
     const live = S.events.filter(g => g.state === "in").length;
     $("gm-sub").textContent = S.events.length ? `${S.events.length} games${live ? ` · ${live} live` : ""}` : "";
   }
+  function spotChip(t) {
+    const n = seedsFor(t.conf).indexOf(t) + 1;
+    if (n >= 1 && n <= 4) return `<span class="spot dv" title="Leads the ${esc(t.div)} · #${n} seed">Div · #${n}</span>`;
+    if (n >= 5 && n <= SPOTS) return `<span class="spot wc" title="Holds a wild card · #${n} seed">WC · #${n}</span>`;
+    return status(t) === "out" ? '<span class="spot out" title="Eliminated from playoff contention">Out</span>' : "";
+  }
   function renderDivs() {
     const me = team(S.my);
     $("divs").innerHTML = Object.keys(DIVS).map(d => {
       const rows = divTable(d); if (!rows.length) return "";
       const lead = rows[0];
       return `<div class="card div ${d.slice(0, 3).toLowerCase()}"><h4>${d}</h4><div class="tw"><table>
-        <thead><tr><th>Team</th><th>W-L</th><th>GB</th><th>Div</th><th>Strk</th></tr></thead>
-        <tbody>${rows.map(t => `<tr class="${t === me ? "me" : watched(t) ? "watching" : ""}"><td>${t.logo ? `<img src="${esc(t.logo)}" alt="" loading="lazy">` : ""}${esc(t.name)}</td><td>${rec(t)}</td><td>${fmtGB(gb(t, lead))}</td><td>${esc(t.divRec || "–")}</td><td>${esc(t.streak || "–")}</td></tr>`).join("")}</tbody></table></div></div>`;
+        <thead><tr><th>Team</th><th style="text-align:left">Playoffs</th><th>W-L</th><th>GB</th><th>Div</th><th>Strk</th></tr></thead>
+        <tbody>${rows.map(t => `<tr class="${t === me ? "me" : watched(t) ? "watching" : ""}"><td>${t.logo ? `<img src="${esc(t.logo)}" alt="" loading="lazy">` : ""}${esc(t.name)}</td><td class="sp">${spotChip(t)}</td><td>${rec(t)}</td><td>${fmtGB(gb(t, lead))}</td><td>${esc(t.divRec || "–")}</td><td>${esc(t.streak || "–")}</td></tr>`).join("")}</tbody></table></div></div>`;
     }).join("");
   }
   function renderTeamSelect() {
