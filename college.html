@@ -648,6 +648,7 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
     } catch (e) {
       S.sched[f.id] = { at: Date.now() - 9 * 60 * 1000, last: null, next: null, record: "" };
     }
+    applyPollRanks();
     renderSpots();
     renderB12();
   }
@@ -704,7 +705,13 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
     const sel = S.week || S.current;
     const latestWk = pollWeek(S.latestPolls || []);
     const newer = sel && sel.type === "2" && latestWk && p.week && +latestWk > +p.week;
-    $("poll-sub").innerHTML = `${esc(p.headline || p.name)}${p.week && sel?.type === "2" && !S.pollNote ? ` · <span style="color:var(--ink-2)">the rankings going into these games</span>` : ""}${S.pollNote ? `<br><span style="color:var(--live)">${esc(S.pollNote)}</span>` : ""}${newer && !S.pollNote ? `<br>Newer poll out: Week ${esc(latestWk)}. Use Next › to see it with that week's games.` : ""}`;
+    if (p.carried) {
+      const nx = CFP_DATES.find(d => d.t > new Date());
+      const fmtD = d => new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric" }).format(d);
+      $("poll-sub").innerHTML = `${esc(p.headline || p.name)} · <span style="color:var(--ink-2)">the committee's most recent rankings${p.date ? `, released ${esc(fmtD(p.date))}` : ""}${nx ? `; next release ${esc(fmtD(nx.t))}` : ""}</span>`;
+    } else {
+      $("poll-sub").innerHTML = `${esc(p.headline || p.name)}${p.week && sel?.type === "2" && !S.pollNote ? ` · <span style="color:var(--ink-2)">the rankings going into these games</span>` : ""}${S.pollNote ? `<br><span style="color:var(--live)">${esc(S.pollNote)}</span>` : ""}${newer && !S.pollNote ? `<br>Newer poll out: Week ${esc(latestWk)}. Use Next › to see it with that week's games.` : ""}`;
+    }
     $("poll").innerHTML = (p.ranks || []).slice(0, 25).map(r => {
       const t = r.team || {};
       const id = String(t.id);
@@ -793,7 +800,7 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
 
   function rankingSource() {
     const L = S.latestPolls && S.latestPolls.length ? S.latestPolls : S.polls;
-    const cfp = L.find(p => /cfp|playoff/i.test(p.key + p.name));
+    const cfp = L.find(p => /cfp|playoff/i.test(p.key + p.name)) || S.lastCfp;
     const ap = L.find(p => /^ap$/i.test(p.key) || /AP/.test(p.name));
     return cfp ? { poll: cfp, isCfp: true } : ap ? { poll: ap, isCfp: false } : null;
   }
@@ -953,7 +960,7 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
     const now = new Date();
     if (!(String(S.current?.type) === "3" || now >= new Date("2026-12-06T17:00:00Z"))) return;
     if (S.postAt && Date.now() - S.postAt < (S.post?.some(g => g.state === "in") ? 30e3 : 5 * 60e3)) return;
-    try { const d = await getJSON(`${API}/scoreboard?groups=80&limit=400&seasontype=3&week=1`); S.post = (d.events || []).map(norm); S.postAt = Date.now(); renderBracket(); }
+    try { const d = await getJSON(`${API}/scoreboard?groups=80&limit=400&seasontype=3&week=1`); S.post = (d.events || []).map(norm); S.postAt = Date.now(); applyPollRanks(); renderBracket(); }
     catch (e) { S.postAt = Date.now(); }
   }
 
@@ -982,10 +989,32 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
       headline: r.headline || r.name, ranks: r.ranks, others: r.others || [],
       week: r.occurrence?.number != null ? String(r.occurrence.number) : null,
       stype: String(r.season?.type?.type ?? r.season?.type ?? ""), final: !!r.occurrence?.last,
-      label: r.occurrence?.displayValue || ""
+      label: r.occurrence?.displayValue || "", date: r.date ? new Date(r.date) : null
     }));
   }
   const pollWeek = list => list.find(p => p.week)?.week || null;
+  const isCfpPoll = p => /cfp|playoff/i.test((p.key || "") + (p.name || ""));
+  // ESPN's "latest" feed drops the CFP rankings from Sunday (new AP poll) until the committee's next Tuesday release.
+  // Keep the committee's most recent rankings on hand so the CFP tab and the projected bracket don't disappear.
+  async function ensureLastCfp() {
+    const inLatest = (S.latestPolls || []).find(isCfpPoll);
+    if (inLatest) { S.lastCfp = inLatest; return; }
+    const lw = +pollWeek(S.latestPolls || []);
+    if (!lw || new Date() < new Date("2026-11-03T00:00:00Z")) return;
+    if (S.lastCfp && +S.lastCfp.week >= lw - 1) return;
+    for (let w = lw - 1; w >= Math.max(1, lw - 2); w--) {
+      try {
+        const list = parsePolls(await getJSON(`${API}/rankings?${S.seasonYear ? `seasons=${S.seasonYear}&` : ""}weeks=${w}&types=2`));
+        const c = list.find(isCfpPoll);
+        if (c) { S.lastCfp = c; return; }
+      } catch (e) { return; }
+    }
+  }
+  function withCfp(list, sel) {
+    if (!sel || sel.type !== "2" || list.some(isCfpPoll) || !S.lastCfp) return list;
+    if (+S.lastCfp.week > +sel.week) return list;
+    return list.concat([{ ...S.lastCfp, carried: true }]);
+  }
   function choosePoll() {
     // The first time CFP rankings appear, switch to them even if AP was picked earlier.
     const cfpNow = S.polls.find(p => /cfp|playoff/i.test(p.key + p.name)) || (S.latestPolls || []).find(p => /cfp|playoff/i.test(p.key + p.name));
@@ -1001,7 +1030,7 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
     // Postseason: show the latest (final) rankings.
     if (!sel || sel.type !== "2") return { polls: S.latestPolls || [], asked: null };
     const latestWk = pollWeek(S.latestPolls || []);
-    if (latestWk === String(sel.week)) return { polls: S.latestPolls, asked: sel.week };
+    if (latestWk === String(sel.week)) return { polls: withCfp(S.latestPolls, sel), asked: sel.week };
     const key = `${S.seasonYear || ""}:${sel.type}:${sel.week}`;
     S.pollCache = S.pollCache || {};
     if (!S.pollCache[key]) {
@@ -1009,11 +1038,14 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
         const d = await getJSON(`${API}/rankings?${S.seasonYear ? `seasons=${S.seasonYear}&` : ""}weeks=${sel.week}&types=2`);
         const list = parsePolls(d);
         // Past weeks never change, so keep them; recheck future weeks later.
-        if (list.length && pollWeek(list) === String(sel.week)) S.pollCache[key] = list;
-        else return { polls: list.length ? list : (S.latestPolls || []), asked: sel.week, missing: true };
+        if (list.length && pollWeek(list) === String(sel.week)) {
+          if (latestWk && +sel.week < +latestWk) S.pollCache[key] = list;   // older weeks never change
+          else return { polls: withCfp(list, sel), asked: sel.week };
+        }
+        else return { polls: withCfp(list.length ? list : (S.latestPolls || []), sel), asked: sel.week, missing: true };
       } catch (e) { return { polls: S.latestPolls || [], asked: sel.week, missing: true, failed: true }; }
     }
-    return { polls: S.pollCache[key], asked: sel.week };
+    return { polls: withCfp(S.pollCache[key], sel), asked: sel.week };
   }
 
   /* ---------- Loading & refresh ---------- */
@@ -1046,6 +1078,7 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
     } else problems.push("scores");
     if (rk.status === "fulfilled") S.latestPolls = parsePolls(rk.value);
     else if (!S.latestPolls) problems.push("rankings");
+    await ensureLastCfp();
     // Line the poll up with the week being viewed.
     const sel = S.week || S.current;
     const pw = await pollsForWeek(sel);
@@ -1069,7 +1102,20 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
     loadPost();
     FAVS.forEach(f => ensureSched(f));
   }
+  // Game data from ESPN carries the CFP ranking once it exists (AP before that). Re-stamp every team's rank
+  // from the poll selected in the panel so cards, spotlight and poll always agree.
+  function applyPollRanks() {
+    const p = currentPoll();
+    const map = p ? new Map((p.ranks || []).map(r => [String(r.team?.id), r.current])) : null;
+    const lists = [S.events, S.post || [], ...Object.values(S.sched || {}).map(x => x?.events || [])];
+    for (const evs of lists) for (const g of evs) for (const t of [g.away, g.home]) {
+      if (!t) continue;
+      if (!("gameRank" in t)) t.gameRank = t.rank;
+      t.rank = map ? (map.get(t.id) ?? null) : t.gameRank;
+    }
+  }
   function renderAll() {
+    applyPollRanks();
     renderWeeks();
     renderSpots();
     renderGames();
@@ -1141,7 +1187,7 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
   $("rr").addEventListener("change", e => { S.rrOnly = e.target.checked; save(); renderGames(); });
   $("pollsel").addEventListener("click", e => {
     const b = e.target.closest("[data-poll]"); if (!b) return;
-    S.pollKey = S.pollPick = b.dataset.poll; save(); renderPoll(); renderSpots(); renderRoad();
+    S.pollKey = S.pollPick = b.dataset.poll; save(); renderAll();
   });
 
   load();
