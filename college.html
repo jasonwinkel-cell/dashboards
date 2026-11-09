@@ -712,19 +712,23 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
     } else {
       $("poll-sub").innerHTML = `${esc(p.headline || p.name)}${p.week && sel?.type === "2" && !S.pollNote ? ` · <span style="color:var(--ink-2)">the rankings going into these games</span>` : ""}${S.pollNote ? `<br><span style="color:var(--live)">${esc(S.pollNote)}</span>` : ""}${newer && !S.pollNote ? `<br>Newer poll out: Week ${esc(latestWk)}. Use Next › to see it with that week's games.` : ""}`;
     }
+    // ESPN scores an unranked team as if it were #26, so new entries look like big jumps. Show "NEW" instead,
+    // and no movement at all on a first-ever release (the first CFP rankings).
+    const firstRelease = (p.ranks || []).every(r => !r.previous);
     $("poll").innerHTML = (p.ranks || []).slice(0, 25).map(r => {
       const t = r.team || {};
       const id = String(t.id);
       const fav = favById[id];
       const tr = String(r.trend ?? "-");
       const trCls = tr.startsWith("+") ? "up" : tr.startsWith("-") && tr !== "-" ? "dn" : "";
-      const trTxt = tr.startsWith("+") ? "▲" + tr.slice(1) : tr !== "-" && tr.startsWith("-") ? "▼" + tr.slice(1) : "—";
+      const isNew = !r.previous;
+      const trTxt = isNew ? (firstRelease ? "—" : "NEW") : tr.startsWith("+") ? "▲" + tr.slice(1) : tr !== "-" && tr.startsWith("-") ? "▼" + tr.slice(1) : "—";
       const ws = weekStatus(id);
       const logo = t.logo || t.logos?.[0]?.href || "";
       const nm = t.nickname || t.location || t.shortDisplayName || t.name || t.abbreviation;
       return `<li class="${fav ? fav.key : ""}">
         <span class="pr">${r.current}</span>
-        <span class="tr ${trCls}" title="Previous: ${esc(r.previous || "NR")}">${trTxt}</span>
+        <span class="tr ${isNew ? (firstRelease ? "" : "up") : trCls}" title="${firstRelease ? "First rankings of the season" : `Previous: ${esc(r.previous || "unranked")}`}">${trTxt}</span>
         ${logo ? `<img src="${esc(logo)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : "<span></span>"}
         <span class="pt" title="${esc(r.firstPlaceVotes ? r.firstPlaceVotes + " first-place votes" : "")}">${esc(nm)}<small>${esc(r.recordSummary || "")}</small></span>
         <span class="ws ${ws.cls}">${esc(ws.txt)}</span>
