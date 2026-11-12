@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="NFL">
-<meta name="app-version" content="2026-11-08.11">
+<meta name="app-version" content="2026-11-11.1">
 <link rel="stylesheet" href="assets/nav.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -659,8 +659,9 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
     const me = team(S.my);
     let icon = "<span></span>";
     if (root) {
-      if (root.pick.id === t.id) icon = root.kind === "watch" ? thumb("watch", `You're watching the ${root.pick.name}`) : thumb("up", root.kind === "mine" ? `Your team` : `Root for the ${T?.name || t.name}: a win helps the ${me?.name}`);
-      else if (root.kind !== "watch") icon = thumb("down", root.kind === "mine" ? `Opponent` : root.why || `Root against the ${T?.name || t.name}`);
+      // Only the team to root for gets an icon; the reason shows on hover / long-press.
+      if (root.pick.id === t.id) icon = root.kind === "watch" ? thumb("watch", `You're watching the ${root.pick.name}`)
+        : thumb("up", root.kind === "mine" ? `Your team` : `Root for the ${T?.name || t.name}. ${root.why || ""}`.trim());
     }
     const lose = g.state === "post" && o.winner && !t.winner;
     const poss = g.state === "in" && g.sit?.possession && String(g.sit.possession) === t.id;
@@ -708,7 +709,7 @@ footer.small{color:var(--ink-3);font-size:12.5px;padding-block:0 30px}
     $("raceonly").checked = !!S.raceOnly;
     $("raceonly-l").textContent = me ? `Only games that matter to the ${me.name}` : "Only games that matter to my team";
     const shown = base.filter(g => f === "all" || g.state === f);
-    $("legend").innerHTML = me ? `<span>${thumb("up", "Root for")}Root for: a win helps the ${esc(me.name)}</span><span>${thumb("down", "Root against")}Root against</span>${S.watch.length ? `<span>${thumb("watch", "Watching")}A team you watch</span>` : ""}` : "";
+    $("legend").innerHTML = me ? `<span>${thumb("up", "Root for")}Root for: a win helps the ${esc(me.name)}</span>${S.watch.length ? `<span>${thumb("watch", "Watching")}A team you watch</span>` : ""}` : "";
     $("games").innerHTML = shown.length ? shown.map(gameCard).join("")
       : `<p class="note">${!list.length ? "No games scheduled this week." : f === "in" ? "No games are being played right now." : f === "pre" ? "No games left to play this week." : f === "post" ? "No games have finished yet this week." : "No games match this filter."}</p>`;
     const live = S.events.filter(g => g.state === "in").length;
